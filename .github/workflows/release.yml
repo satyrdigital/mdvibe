@@ -23,6 +23,19 @@ jobs:
       SIGN_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_PFX_BASE64 }}
       SIGN_CERT_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
     steps:
+      # Re-pushing an existing tag must never rebuild or re-draft a published release.
+      - name: Refuse to touch a published release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $draft = gh release view $env:TAG --repo $env:GITHUB_REPOSITORY --json isDraft -q .isDraft 2>$null
+          if ($LASTEXITCODE -eq 0 -and $draft -eq 'false') {
+            Write-Error "Release $env:TAG is already published; nothing to do."
+            exit 1
+          }
+          exit 0
+
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.TAG }}
