@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { isMac, keys, keysIn, setPlatform } from '../src/ui/platform';
 import { fileUrlFor, shortcutKey } from '../src/ui/app';
 
 describe('shortcutKey', () => {
@@ -39,5 +40,30 @@ describe('fileUrlFor (print/PDF links)', () => {
 
   it('handles network folders', () => {
     expect(fileUrlFor('\\\\srv\\share\\docs', 'a.md')).toBe('file://srv/share/docs/a.md');
+  });
+});
+
+describe('platform shortcut labels', () => {
+  it('keeps Windows notation off a Mac', () => {
+    setPlatform('windows');
+    expect(keys('Ctrl+Shift+L')).toBe('Ctrl+Shift+L');
+    expect(keysIn('Reading layout (Ctrl+Shift+L)')).toBe('Reading layout (Ctrl+Shift+L)');
+    expect(isMac()).toBe(false);
+  });
+
+  it('uses Mac symbols and Mac keys on macOS', () => {
+    setPlatform('macos');
+    expect(keys('Ctrl+O')).toBe('⌘O');
+    expect(keys('Ctrl+Shift+L')).toBe('⇧⌘L');
+    expect(keys('Ctrl++ / Ctrl+=')).toBe('⌘+ / ⌘=');
+    expect(keys('Ctrl+-')).toBe('⌘-');
+    expect(keys('F5')).toBe('⌘R');
+    expect(keys('F11')).toBe('⌃⌘F');
+    expect(keys('F3 / Shift+F3')).toBe('⌘G / ⇧⌘G');
+    expect(keys('Ctrl+Shift+B')).toBe('⌃⌘S');
+    expect(keys('Esc')).toBe('esc');
+    expect(keysIn('Theme: Dark (Ctrl+Shift+T)')).toBe('Theme: Dark (⇧⌘T)');
+    expect(keysIn('Menu (Alt)')).toBe('Menu');
+    setPlatform('windows');
   });
 });

@@ -7,6 +7,8 @@ use webview2_com::PrintToPdfCompletedHandler;
 use windows::core::{Interface, HSTRING, PCWSTR, PWSTR};
 use windows::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK};
 
+use crate::pdf::{PdfOptions, MM_PER_INCH};
+
 /// Installed WebView2 runtime version, if any.
 pub fn webview2_version() -> Option<String> {
     let mut out = PWSTR::null();
@@ -66,21 +68,6 @@ pub fn harden<R: Runtime>(window: &WebviewWindow<R>) {
         }
     });
 }
-
-#[derive(Debug, Clone, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct PdfOptions {
-    /// Page size in millimetres (already oriented).
-    pub page_width_mm: f64,
-    pub page_height_mm: f64,
-    pub margin_mm: f64,
-    pub landscape: bool,
-    pub backgrounds: bool,
-    pub header_footer: bool,
-    pub title: String,
-}
-
-const MM_PER_INCH: f64 = 25.4;
 
 /// Prints the current page (print stylesheet) to `path`. Resolves when done.
 pub async fn print_to_pdf<R: Runtime>(

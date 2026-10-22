@@ -52,7 +52,19 @@ pub fn apply<R: Runtime>(
     store: &JsonStore,
     cascade_from: Option<(i32, i32)>,
 ) {
-    let Some(mut state) = store.read::<WindowState>() else {
+    // Nothing saved yet (first run): a cascaded window keeps its default size.
+    let stored = store.read::<WindowState>().or_else(|| {
+        cascade_from?;
+        let size = window.inner_size().ok()?;
+        Some(WindowState {
+            x: 0,
+            y: 0,
+            width: size.width,
+            height: size.height,
+            maximized: false,
+        })
+    });
+    let Some(mut state) = stored else {
         let _ = window.center();
         return;
     };
@@ -75,7 +87,8 @@ pub fn apply<R: Runtime>(
             }
         })
         .collect();
-    if is_visible(&state, &monitors) {
+    // No monitor information (e.g. while the screen is locked): trust the position.
+    if monitors.is_empty() || is_visible(&state, &monitors) {
         let _ = window.set_size(PhysicalSize::new(state.width, state.height));
         let _ = window.set_position(PhysicalPosition::new(state.x, state.y));
     } else {

@@ -109,6 +109,11 @@ kbd {
   flex: 1;
 }
 
+/* Groups controls for the macOS toolbar; no box of its own elsewhere. */
+.toolbar-group {
+  display: contents;
+}
+
 .icon-btn {
   display: inline-flex;
   align-items: center;

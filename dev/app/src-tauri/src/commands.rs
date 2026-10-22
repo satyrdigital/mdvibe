@@ -25,17 +25,25 @@ pub struct StartupInfo {
     pub image_base: &'static str,
     pub webview_version: Option<String>,
     pub log_dir: String,
+    /// macOS: the user picked an accent color (else the app's own accent applies).
+    pub system_accent: bool,
 }
 
 #[tauri::command]
-pub fn startup_info<R: Runtime>(app: AppHandle<R>, state: State<'_, AppState>) -> StartupInfo {
+pub fn startup_info<R: Runtime>(
+    app: AppHandle<R>,
+    window: WebviewWindow<R>,
+    state: State<'_, AppState>,
+) -> StartupInfo {
     let info = app.package_info();
     StartupInfo {
         product_name: info.name.clone(),
         version: info.version.to_string(),
         platform: std::env::consts::OS,
         debug: cfg!(debug_assertions),
-        launch_file: state.take_launch_file().map(|p| document::display_path(&p)),
+        launch_file: state
+            .take_launch_file(window.label())
+            .map(|p| document::display_path(&p)),
         settings: state.settings.load(),
         image_base: if cfg!(windows) {
             "http://mdimg.localhost/"
@@ -47,6 +55,10 @@ pub fn startup_info<R: Runtime>(app: AppHandle<R>, state: State<'_, AppState>) -
         #[cfg(not(windows))]
         webview_version: None,
         log_dir: document::display_path(&state.log_dir),
+        #[cfg(target_os = "macos")]
+        system_accent: crate::mac::uses_system_accent(),
+        #[cfg(not(target_os = "macos"))]
+        system_accent: false,
     }
 }
 
@@ -61,22 +73,31 @@ pub fn open_document<R: Runtime>(
     let requested = PathBuf::from(&path);
     let path = document::canonical(&requested).unwrap_or(requested);
     let doc = document::load(&path)?;
-    let is_new = state.doc_path().as_deref() != Some(path.as_path());
+    let is_new = state.doc_path(window.label()).as_deref() != Some(path.as_path());
     if is_new {
-        state.set_doc(Some(path.clone()));
+        state.set_doc(window.label(), Some(path.clone()));
         start_doc_watch(&window, &state, &path);
         if state.settings.remember_recent() {
             state.recent.add(&doc.path);
         }
-        let product = window.app_handle().package_info().name.clone();
-        let _ = window.set_title(&format!("{} — {}", doc.name, product));
+        // macOS titles windows by their document only; Windows adds the product.
+        #[cfg(target_os = "macos")]
+        crate::mac::show_document(&window, &path, &doc.name);
+        #[cfg(not(target_os = "macos"))]
+        {
+            let product = window.app_handle().package_info().name.clone();
+            let _ = window.set_title(&format!("{} — {}", doc.name, product));
+        }
     }
     Ok(doc)
 }
 
 #[tauri::command]
-pub fn reload_document(state: State<'_, AppState>) -> Result<LoadedDocument, DocumentError> {
-    let Some(path) = state.doc_path() else {
+pub fn reload_document<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, AppState>,
+) -> Result<LoadedDocument, DocumentError> {
+    let Some(path) = state.doc_path(window.label()) else {
         return Err(DocumentError {
             kind: document::ErrorKind::NotFound,
             path: String::new(),
@@ -103,10 +124,10 @@ fn start_doc_watch<R: Runtime>(window: &WebviewWindow<R>, state: &AppState, path
         );
     });
     match res {
-        Ok(w) => state.set_doc_watcher(Some(w)),
+        Ok(w) => state.set_doc_watcher(window.label(), Some(w)),
         Err(e) => {
             log::warn!("file watching unavailable: {e}");
-            state.set_doc_watcher(None);
+            state.set_doc_watcher(window.label(), None);
         }
     }
 }
@@ -125,7 +146,7 @@ pub async fn pick_markdown_file<R: Runtime>(
         .set_parent(&window)
         .add_filter("Markdown", MARKDOWN_EXTENSIONS)
         .add_filter("All files", &["*"]);
-    if let Some(dir) = state.doc_dir() {
+    if let Some(dir) = state.doc_dir(window.label()) {
         dialog = dialog.set_directory(dir);
     }
     dialog.pick_file(move |f| {
@@ -138,29 +159,30 @@ pub async fn pick_markdown_file<R: Runtime>(
         .map(|p| document::display_path(&p)))
 }
 
-/// Top-left corner of this window, so the next instance opens cascaded.
-fn origin_of<R: Runtime>(window: &WebviewWindow<R>) -> Option<(i32, i32)> {
+/// Top-left corner of this window, so the next window opens cascaded.
+pub(crate) fn origin_of<R: Runtime>(window: &WebviewWindow<R>) -> Option<(i32, i32)> {
     if window.is_maximized().unwrap_or(false) || window.is_fullscreen().unwrap_or(false) {
         return None;
     }
     window.outer_position().ok().map(|p| (p.x, p.y))
 }
 
-/// Starts an independent MDVibe instance (optionally with a document).
+/// Opens a new window, optionally with a document (Windows: a new instance).
 #[tauri::command]
 pub fn open_in_new_window<R: Runtime>(
     window: WebviewWindow<R>,
     path: Option<String>,
 ) -> Result<(), String> {
     let origin = origin_of(&window);
+    let app = window.app_handle();
     match path {
-        None => instance::spawn(None, origin),
+        None => instance::open(app, None, origin),
         Some(p) => {
             let p = PathBuf::from(p);
             if !p.is_file() {
                 return Err("The file does not exist.".into());
             }
-            instance::spawn(Some(&p), origin)
+            instance::open(app, Some(&p), origin)
         }
     }
 }
@@ -172,13 +194,15 @@ pub fn activate_link<R: Runtime>(
     state: State<'_, AppState>,
     href: String,
 ) -> Result<LinkTarget, String> {
-    let base = state.doc_dir();
+    let base = state.doc_dir(window.label());
     let target = links::classify(&href, base.as_deref());
     match &target {
         LinkTarget::External { url } => open_url(url)?,
-        LinkTarget::Markdown { path, .. } => {
-            instance::spawn(Some(Path::new(path)), origin_of(&window))?
-        }
+        LinkTarget::Markdown { path, .. } => instance::open(
+            window.app_handle(),
+            Some(Path::new(path)),
+            origin_of(&window),
+        )?,
         _ => {}
     }
     Ok(target)
@@ -197,10 +221,14 @@ fn open_url(url: &str) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn reveal_in_folder(state: State<'_, AppState>, path: String) -> Result<(), String> {
+pub fn reveal_in_folder<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<(), String> {
     let p = PathBuf::from(&path);
-    let current = state.doc_path();
-    let allowed = links::network_path_allowed(&p, state.doc_dir().as_deref())
+    let current = state.doc_path(window.label());
+    let allowed = links::network_path_allowed(&p, state.doc_dir(window.label()).as_deref())
         || current.as_deref() == Some(p.as_path());
     if !allowed {
         return Err("Network locations on other computers are not opened.".into());
@@ -232,8 +260,12 @@ pub fn recent_set_pinned(state: State<'_, AppState>, path: String, pinned: bool)
 }
 
 #[tauri::command]
-pub fn recent_clear(state: State<'_, AppState>) {
+pub fn recent_clear<R: Runtime>(app: AppHandle<R>, state: State<'_, AppState>) {
     state.recent.clear();
+    #[cfg(target_os = "macos")]
+    crate::mac::clear_system_recent(&app);
+    #[cfg(not(target_os = "macos"))]
+    let _ = app;
 }
 
 /// "Save as PDF…": asks for a destination, then prints the print stylesheet to PDF.
@@ -244,7 +276,9 @@ pub async fn export_pdf<R: Runtime>(
     state: State<'_, AppState>,
     options: Value,
 ) -> Result<Option<String>, String> {
-    let doc = state.doc_path().ok_or("No document is open.")?;
+    let doc = state
+        .doc_path(window.label())
+        .ok_or("No document is open.")?;
     let stem = doc
         .file_stem()
         .map(|s| s.to_string_lossy().into_owned())
@@ -270,7 +304,7 @@ pub async fn export_pdf<R: Runtime>(
     }
     #[cfg(windows)]
     {
-        let opt: crate::win::PdfOptions =
+        let opt: crate::pdf::PdfOptions =
             serde_json::from_value(options).map_err(|e| format!("invalid PDF options: {e}"))?;
         crate::win::print_to_pdf(&window, dest.clone(), opt)
             .await
@@ -281,11 +315,54 @@ pub async fn export_pdf<R: Runtime>(
         log::info!("PDF exported");
         Ok(Some(document::display_path(&dest)))
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
+    {
+        let opt: crate::pdf::PdfOptions =
+            serde_json::from_value(options).map_err(|e| format!("invalid PDF options: {e}"))?;
+        crate::mac::print(&window, opt, Some(dest.clone()))
+            .await
+            .map_err(|e| {
+                log::error!("PDF export failed: {e}");
+                e
+            })?;
+        log::info!("PDF exported");
+        Ok(Some(document::display_path(&dest)))
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
     {
         let _ = (options, dest);
         Err("Save as PDF is not available on this platform yet. Use Print → Save as PDF.".into())
     }
+}
+
+/// Native print dialog (macOS: WKWebView has no `window.print()`).
+/// Resolves once the dialog is closed.
+#[tauri::command]
+pub async fn print_document<R: Runtime>(
+    window: WebviewWindow<R>,
+    options: Value,
+) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let opt: crate::pdf::PdfOptions =
+            serde_json::from_value(options).map_err(|e| format!("invalid print options: {e}"))?;
+        crate::mac::print(&window, opt, None).await
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (window, options);
+        Err("Printing goes through the web view on this platform.".into())
+    }
+}
+
+/// The renderer reports the state of the native menu (macOS): localized
+/// labels and the checkmarks of the focused window.
+#[tauri::command]
+pub fn menu_sync<R: Runtime>(window: WebviewWindow<R>, menu: Value) {
+    #[cfg(target_os = "macos")]
+    crate::mac::sync_menu(&window, &menu);
+    #[cfg(not(target_os = "macos"))]
+    let _ = (window, menu);
 }
 
 #[tauri::command]
@@ -322,6 +399,9 @@ pub fn app_ready<R: Runtime>(
     let startup_ms = state.started.elapsed().as_millis();
     let _ = window.show();
     let _ = window.set_focus();
+    if let Some(id) = state.take_pending_menu(window.label()) {
+        let _ = window.emit_to(window.label(), "menu", id);
+    }
     log::info!(
         "ready: startup={}ms render={}ms bytes={}",
         startup_ms,
@@ -366,5 +446,5 @@ pub fn open_notices<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
     if !path.is_file() {
         return Err("The notices file is not part of this build.".into());
     }
-    instance::spawn(Some(&path), None)
+    instance::open(&app, Some(&path), None)
 }

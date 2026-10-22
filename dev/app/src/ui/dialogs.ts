@@ -3,6 +3,7 @@ import { h, icon } from './dom';
 import { ICONS } from './icons';
 import { Modal } from './modal';
 import { t } from '../i18n';
+import { isMac, keys } from './platform';
 import meta from '../../../project.json';
 
 export const SHORTCUTS: { group: string; items: [string, string][] }[] = [
@@ -47,9 +48,11 @@ export function openShortcuts(): void {
   const m = new Modal(t('menu.shortcuts'));
   for (const g of SHORTCUTS) {
     const table = h('table', { class: 'shortcuts' });
-    for (const [keys, label] of g.items) {
+    for (const [shortcut, label] of g.items) {
+      // Alt opens the in-window menu on Windows only; a Mac has the menu bar.
+      if (isMac() && shortcut.startsWith('Alt')) continue;
       table.append(
-        h('tr', {}, h('td', {}, t(label as 'menu.open')), h('td', {}, ...keys.split(' / ').flatMap((k, i) => [i ? ' / ' : '', h('kbd', {}, k)]))),
+        h('tr', {}, h('td', {}, t(label as 'menu.open')), h('td', {}, ...keys(shortcut).split(' / ').flatMap((k, i) => [i ? ' / ' : '', h('kbd', {}, k)]))),
       );
     }
     m.body.append(h('h3', { class: 'shortcuts-group' }, t(g.group as 'shortcuts.file')), table);

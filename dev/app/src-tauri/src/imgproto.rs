@@ -80,7 +80,7 @@ pub fn handle<R: Runtime>(
     let base_dir = ctx
         .app_handle()
         .try_state::<AppState>()
-        .and_then(|s| s.doc_dir());
+        .and_then(|s| s.doc_dir(ctx.webview_label()));
     let path_str = request.uri().path().to_owned();
     std::thread::spawn(move || {
         let Some(path) = resolve(&path_str, base_dir.as_deref()) else {

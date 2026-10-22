@@ -1,9 +1,10 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The single MDVibe window: app commands plus the minimal window/event APIs. No filesystem, shell, HTTP or dialog plugin access from the renderer.",
+  "description": "MDVibe document windows (Windows: the single window of each instance; macOS: every window of the app): app commands plus the minimal window/event APIs. No filesystem, shell, HTTP or dialog plugin access from the renderer.",
   "windows": [
-    "main"
+    "main",
+    "doc-*"
   ],
   "permissions": [
     "core:event:allow-listen",
@@ -14,6 +15,8 @@
     "core:window:allow-close",
     "core:window:allow-set-theme",
     "core:window:allow-set-focus",
+    "core:window:allow-start-dragging",
+    "core:window:allow-internal-toggle-maximize",
     "allow-startup-info",
     "allow-open-document",
     "allow-reload-document",
@@ -28,6 +31,8 @@
     "allow-recent-set-pinned",
     "allow-recent-clear",
     "allow-export-pdf",
+    "allow-print-document",
+    "allow-menu-sync",
     "allow-log-message",
     "allow-open-log-folder",
     "allow-app-ready",

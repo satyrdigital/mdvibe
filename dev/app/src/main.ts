@@ -2,12 +2,14 @@ import './styles/tokens.css';
 import './styles/app.css';
 import './styles/markdown.css';
 import './styles/code.css';
+import './styles/macos.css';
 import './styles/print.css';
 import { createBackend } from './core/backend';
 import { App } from './ui/app';
 import { toast } from './ui/toast';
 import { resolveLanguage, setLanguage, t } from './i18n';
 import { normalize } from './core/settings';
+import { setPlatform } from './ui/platform';
 
 async function main(): Promise<void> {
   const backend = await createBackend();
@@ -31,6 +33,8 @@ async function main(): Promise<void> {
   const dark = pref === 'dark' || (pref !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   document.documentElement.dataset.platform = info.platform;
+  setPlatform(info.platform);
+  if (info.systemAccent) document.documentElement.dataset.accent = 'system';
 
   await new App(backend, info).start();
 }

@@ -1,0 +1,850 @@
+/*
+ * macOS look (Apple HIG, macOS 26 design): the window has no separate title
+ * bar — the toolbar is the title bar and holds the window controls; toolbar
+ * controls and the sidebar float on glass above the document, which scrolls
+ * underneath them. System font and sizes, capsule controls, the user's accent
+ * color when one is chosen. Only active when <html data-platform="macos">;
+ * other platforms are untouched.
+ */
+
+:root[data-platform='macos'] {
+  --ui-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --ui-size: 13px;
+  --toolbar-h: 52px;
+  --sidebar-w: 236px;
+  --inset: 8px;
+  /* window controls: 19–79 pt, centred at 26 pt (empty unified NSToolbar) */
+  --traffic-w: 92px;
+  --r-xs: 5px;
+  --r-sm: 8px;
+  --r-lg: 16px;
+  --dur: 160ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-strong: rgba(250, 250, 252, 0.86);
+  --glass-edge: rgba(0, 0, 0, 0.08);
+  --glass-shine: rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 20px rgba(0, 0, 0, 0.08);
+  --glass-blur: saturate(180%) blur(22px);
+  --fill-hover: rgba(0, 0, 0, 0.055);
+  --fill-press: rgba(0, 0, 0, 0.1);
+  --fill-quiet: rgba(0, 0, 0, 0.05);
+  --label: rgba(0, 0, 0, 0.85);
+  --label-2: rgba(0, 0, 0, 0.5);
+  --label-3: rgba(0, 0, 0, 0.26);
+  --separator: rgba(0, 0, 0, 0.1);
+  --sheet-bg: rgba(252, 252, 253, 0.94);
+  --hud: rgba(30, 30, 32, 0.82);
+  --mac-accent: var(--primary);
+  --mac-accent-soft: color-mix(in srgb, var(--mac-accent) 16%, transparent);
+}
+
+:root[data-platform='macos'][data-theme='dark'] {
+  --glass: rgba(44, 46, 58, 0.66);
+  --glass-strong: rgba(38, 40, 52, 0.88);
+  --glass-edge: rgba(255, 255, 255, 0.1);
+  --glass-shine: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --fill-hover: rgba(255, 255, 255, 0.08);
+  --fill-press: rgba(255, 255, 255, 0.14);
+  --fill-quiet: rgba(255, 255, 255, 0.07);
+  --label: rgba(255, 255, 255, 0.88);
+  --label-2: rgba(255, 255, 255, 0.55);
+  --label-3: rgba(255, 255, 255, 0.28);
+  --separator: rgba(255, 255, 255, 0.12);
+  --sheet-bg: rgba(34, 36, 46, 0.94);
+  --hud: rgba(58, 60, 72, 0.86);
+}
+
+/* The accent the user picked in System Settings, when not "Multicolor". */
+@supports (color: -apple-system-control-accent) {
+  :root[data-platform='macos'][data-accent='system'] {
+    --mac-accent: -apple-system-control-accent;
+  }
+}
+
+:root[data-platform='macos'] body {
+  font-weight: 400;
+  letter-spacing: -0.003em;
+}
+
+:root[data-platform='macos'] ::selection {
+  background: color-mix(in srgb, var(--mac-accent) 28%, transparent);
+}
+
+:root[data-platform='macos'] :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--mac-accent) 55%, transparent);
+  outline-offset: 1px;
+}
+
+:root[data-platform='macos'] .icon svg {
+  stroke-width: 1.5;
+}
+
+/* ---------- window: toolbar is the title bar ---------- */
+
+:root[data-platform='macos'] .app {
+  position: relative;
+}
+
+:root[data-platform='macos'] .toolbar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 20;
+  height: var(--toolbar-h);
+  gap: 10px;
+  padding: 0 12px 0 var(--traffic-w);
+  background: none;
+  border: 0;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+/* Scroll edge effect: the document blurs and fades out under the toolbar. */
+:root[data-platform='macos'] .toolbar::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 -14px 0;
+  z-index: -1;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg-app) 94%, transparent) 0%, color-mix(in srgb, var(--bg-app) 86%, transparent) 62%, transparent 100%);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  pointer-events: none;
+}
+
+:root[data-platform='macos'] .app:has(.viewport[data-view='page']) .toolbar::before {
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg-canvas) 94%, transparent) 0%, color-mix(in srgb, var(--bg-canvas) 86%, transparent) 62%, transparent 100%);
+}
+
+/* Glass pieces: the sidebar button and the group of trailing controls. */
+:root[data-platform='macos'] .toolbar > .icon-btn,
+:root[data-platform='macos'] .toolbar-group {
+  height: 36px;
+  border-radius: 999px;
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 0.5px 0 var(--glass-shine), 0 0 0 0.5px var(--glass-edge), var(--glass-shadow);
+}
+
+:root[data-platform='macos'] .toolbar > .icon-btn {
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+}
+
+:root[data-platform='macos'] .toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 3px;
+}
+
+:root[data-platform='macos'] .icon-btn {
+  min-width: 34px;
+  height: 30px;
+  border-radius: 999px;
+  color: var(--label);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform 120ms var(--ease);
+}
+
+:root[data-platform='macos'] .icon-btn:hover {
+  background: var(--fill-hover);
+  color: var(--label);
+}
+
+:root[data-platform='macos'] .icon-btn:active {
+  background: var(--fill-press);
+  transform: scale(0.96);
+}
+
+:root[data-platform='macos'] .icon-btn[aria-expanded='true'],
+:root[data-platform='macos'] .icon-btn[aria-pressed='true'] {
+  background: var(--fill-press);
+  color: var(--label);
+}
+
+:root[data-platform='macos'] .toolbar .icon {
+  width: 17px;
+  height: 17px;
+}
+
+/* Title and subtitle on the leading edge, next to the sidebar. */
+:root[data-platform='macos'] .doc-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 4px;
+  font: 600 13px/1.15 var(--ui-font);
+  color: var(--label);
+  transition: margin-left 240ms var(--ease);
+}
+
+:root[data-platform='macos'] .doc-title[data-sub]:not([data-sub=''])::after {
+  content: attr(data-sub);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--label-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:root[data-platform='macos'] .app:not(.no-sidebar) .doc-title {
+  margin-left: calc(var(--sidebar-w) + var(--inset) * 2 - var(--traffic-w) - 36px);
+}
+
+/* Full screen: no window controls; the toolbar stays, as on every Mac app. */
+:root[data-platform='macos'] .app.fullscreen .toolbar {
+  position: absolute;
+  transform: none;
+  padding-left: 12px;
+}
+
+:root[data-platform='macos'] .app.fullscreen:not(.no-sidebar) .doc-title {
+  margin-left: calc(var(--sidebar-w) + var(--inset) * 2 - 12px - 36px);
+}
+
+/* ---------- workspace: content runs under the toolbar and the sidebar ---------- */
+
+:root[data-platform='macos'] .workspace {
+  position: absolute;
+  inset: 0;
+}
+
+:root[data-platform='macos'] .viewport {
+  padding-top: var(--toolbar-h);
+  scroll-padding-top: calc(var(--toolbar-h) + 12px);
+}
+
+:root[data-platform='macos'] .app:not(.no-sidebar) .canvas,
+:root[data-platform='macos'] .app:not(.no-sidebar) .state-view,
+:root[data-platform='macos'] .app:not(.no-sidebar) .banners {
+  margin-left: calc(var(--sidebar-w) + var(--inset));
+}
+
+:root[data-platform='macos'] .sheet {
+  padding-top: 20px;
+}
+
+:root[data-platform='macos'] .viewport[data-view='page'] .canvas {
+  padding-top: 16px;
+}
+
+:root[data-platform='macos'] .viewport[data-view='page'] .sheet {
+  border: 0;
+  border-radius: 4px;
+  box-shadow: 0 0 0 0.5px var(--separator), 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- sidebar: floating glass panel ---------- */
+
+:root[data-platform='macos'] .sidebar {
+  position: absolute;
+  top: var(--inset);
+  bottom: var(--inset);
+  left: var(--inset);
+  z-index: 15;
+  width: var(--sidebar-w);
+  padding-top: calc(var(--toolbar-h) - var(--inset));
+  border: 0;
+  border-radius: 18px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 0.5px 0 var(--glass-shine), 0 0 0 0.5px var(--glass-edge), var(--glass-shadow);
+  transition: transform 260ms var(--ease), opacity 200ms var(--ease), visibility 0s linear 0s;
+}
+
+:root[data-platform='macos'] .app.no-sidebar .sidebar {
+  display: flex;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(calc(-100% - var(--inset) * 2));
+  transition: transform 260ms var(--ease), opacity 200ms var(--ease), visibility 0s linear 260ms;
+}
+
+:root[data-platform='macos'] .app.fullscreen .sidebar {
+  top: calc(var(--inset) + 2px);
+}
+
+/* Outline / Recent: a segmented control. */
+:root[data-platform='macos'] .side-tabs {
+  gap: 0;
+  margin: 2px 12px 8px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--fill-quiet);
+}
+
+:root[data-platform='macos'] .side-tab {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: var(--label-2);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+:root[data-platform='macos'] .side-tab:hover {
+  background: none;
+  color: var(--label);
+}
+
+:root[data-platform='macos'] .side-tab[aria-selected='true'] {
+  background: var(--bg-raised);
+  color: var(--label);
+  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.12), 0 0 0 0.5px var(--glass-edge);
+}
+
+:root[data-platform='macos'][data-theme='dark'] .side-tab[aria-selected='true'] {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+:root[data-platform='macos'] .side-tab .icon {
+  width: 14px;
+  height: 14px;
+}
+
+:root[data-platform='macos'] .side-panel {
+  padding: 0 10px 12px;
+}
+
+:root[data-platform='macos'] .toc-item {
+  padding: 4px 10px;
+  border-radius: 7px;
+  color: var(--label);
+  font-size: 13px;
+  line-height: 18px;
+  transition: background 100ms linear;
+}
+
+:root[data-platform='macos'] .toc-item[data-depth='0'] {
+  font-weight: 600;
+}
+
+:root[data-platform='macos'] .toc-item[data-depth='1'] {
+  padding-left: 22px;
+}
+
+:root[data-platform='macos'] .toc-item[data-depth='2'] {
+  padding-left: 34px;
+}
+
+:root[data-platform='macos'] .toc-item[data-depth='3'],
+:root[data-platform='macos'] .toc-item[data-depth='4'] {
+  padding-left: 46px;
+}
+
+:root[data-platform='macos'] .toc-item[data-depth='2'],
+:root[data-platform='macos'] .toc-item[data-depth='3'],
+:root[data-platform='macos'] .toc-item[data-depth='4'] {
+  color: var(--label-2);
+  font-size: 12.5px;
+}
+
+:root[data-platform='macos'] .toc-item:hover {
+  background: var(--fill-quiet);
+  color: var(--label);
+}
+
+:root[data-platform='macos'] .toc-item.active {
+  background: var(--mac-accent-soft);
+  color: var(--mac-accent);
+  font-weight: 600;
+}
+
+:root[data-platform='macos'] .recent-item {
+  border-radius: 8px;
+}
+
+:root[data-platform='macos'] .recent-item:hover {
+  background: var(--fill-quiet);
+}
+
+:root[data-platform='macos'] .recent-item.current {
+  background: var(--mac-accent-soft);
+}
+
+:root[data-platform='macos'] .recent-open {
+  padding: 5px 10px;
+}
+
+:root[data-platform='macos'] .recent-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+:root[data-platform='macos'] .recent-meta {
+  font-size: 11px;
+  color: var(--label-2);
+}
+
+:root[data-platform='macos'] .recent-name .pin {
+  color: var(--mac-accent);
+}
+
+/* Inactive windows look subdued, as AppKit draws them. */
+:root[data-platform='macos'].window-inactive .toolbar,
+:root[data-platform='macos'].window-inactive .sidebar {
+  filter: saturate(0);
+}
+
+:root[data-platform='macos'].window-inactive .toolbar .icon-btn,
+:root[data-platform='macos'].window-inactive .doc-title {
+  color: var(--label-3);
+}
+
+:root[data-platform='macos'].window-inactive .toc-item.active {
+  background: var(--fill-quiet);
+  color: var(--label);
+}
+
+/* ---------- buttons and controls ---------- */
+
+:root[data-platform='macos'] .btn {
+  gap: 6px;
+  padding: 5px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fill-quiet);
+  box-shadow: inset 0 0 0 0.5px var(--glass-edge);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+:root[data-platform='macos'] .btn:hover {
+  background: var(--fill-hover);
+}
+
+:root[data-platform='macos'] .btn:active {
+  background: var(--fill-press);
+}
+
+:root[data-platform='macos'] .btn.primary {
+  background: var(--mac-accent);
+  color: #fff;
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+:root[data-platform='macos'] .btn.primary:hover {
+  background: color-mix(in srgb, var(--mac-accent) 88%, #000);
+}
+
+:root[data-platform='macos'] .btn.small {
+  padding: 3px 11px;
+  font-size: 12px;
+}
+
+:root[data-platform='macos'] .link-btn {
+  color: var(--mac-accent);
+  font-weight: 500;
+}
+
+:root[data-platform='macos'] kbd {
+  font: 500 12px/1 var(--ui-font);
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--fill-quiet);
+  color: var(--label-2);
+}
+
+:root[data-platform='macos'] .btn.primary kbd {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+:root[data-platform='macos'] .segmented {
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fill-quiet);
+}
+
+:root[data-platform='macos'] .segmented button {
+  padding: 3px 12px;
+  border-radius: 999px;
+  color: var(--label);
+  font-weight: 500;
+}
+
+:root[data-platform='macos'] .segmented button[aria-checked='true'] {
+  background: var(--bg-raised);
+  color: var(--label);
+  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.14), 0 0 0 0.5px var(--glass-edge);
+}
+
+:root[data-platform='macos'][data-theme='dark'] .segmented button[aria-checked='true'] {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+:root[data-platform='macos'] .switch {
+  width: 32px;
+  height: 18px;
+  background: var(--fill-press);
+}
+
+:root[data-platform='macos'] .switch::after {
+  width: 14px;
+  height: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+:root[data-platform='macos'] .switch:checked {
+  background: var(--mac-accent);
+}
+
+:root[data-platform='macos'] .switch:checked::after {
+  transform: translateX(14px);
+}
+
+:root[data-platform='macos'] .slider input[type='range'] {
+  accent-color: var(--mac-accent);
+}
+
+:root[data-platform='macos'] select,
+:root[data-platform='macos'] input.num {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--fill-quiet);
+  box-shadow: inset 0 0 0 0.5px var(--glass-edge);
+}
+
+:root[data-platform='macos'] .preset {
+  border: 0;
+  border-radius: 12px;
+  background: var(--fill-quiet);
+}
+
+:root[data-platform='macos'] .preset[aria-checked='true'] {
+  background: var(--mac-accent-soft);
+  color: var(--mac-accent);
+  box-shadow: inset 0 0 0 1.5px var(--mac-accent);
+}
+
+/* ---------- menus, popovers, find: glass ---------- */
+
+:root[data-platform='macos'] .menu {
+  min-width: 220px;
+  padding: 5px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 0.5px 0 var(--glass-shine), 0 0 0 0.5px var(--glass-edge), 0 10px 32px rgba(0, 0, 0, 0.18);
+  font-size: 13px;
+}
+
+:root[data-platform='macos'] .menu-item {
+  gap: 4px;
+  padding: 3px 10px 3px 4px;
+  border-radius: 6px;
+  line-height: 18px;
+}
+
+:root[data-platform='macos'] .menu-item.active,
+:root[data-platform='macos'] .menu-item:focus {
+  background: var(--mac-accent);
+  color: #fff;
+}
+
+:root[data-platform='macos'] .menu-item.active .menu-shortcut,
+:root[data-platform='macos'] .menu-item:focus .menu-shortcut,
+:root[data-platform='macos'] .menu-item.active .menu-check,
+:root[data-platform='macos'] .menu-item:focus .menu-check,
+:root[data-platform='macos'] .menu-item.active .menu-sub,
+:root[data-platform='macos'] .menu-item:focus .menu-sub {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+:root[data-platform='macos'] .menu-item.disabled {
+  color: var(--label-3);
+}
+
+:root[data-platform='macos'] .menu-check {
+  width: 16px;
+  color: var(--label);
+}
+
+:root[data-platform='macos'] .menu-check .icon {
+  width: 13px;
+  height: 13px;
+}
+
+:root[data-platform='macos'] .menu-shortcut {
+  color: var(--label-3);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+:root[data-platform='macos'] .menu-sep {
+  margin: 5px 10px;
+  background: var(--separator);
+}
+
+:root[data-platform='macos'] .popover {
+  top: calc(var(--toolbar-h) + 2px);
+  right: 12px;
+  padding: 16px 18px 18px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 0.5px 0 var(--glass-shine), 0 0 0 0.5px var(--glass-edge), 0 14px 40px rgba(0, 0, 0, 0.2);
+}
+
+:root[data-platform='macos'] .popover-head h2,
+:root[data-platform='macos'] .form-section h3 {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+:root[data-platform='macos'] .popover hr {
+  border-top-color: var(--separator);
+}
+
+:root[data-platform='macos'] .field-label {
+  font-weight: 500;
+}
+
+:root[data-platform='macos'] .field-hint {
+  color: var(--label-2);
+  font-size: 11px;
+}
+
+:root[data-platform='macos'] .find-bar {
+  top: calc(var(--toolbar-h) + 4px);
+  right: 12px;
+  gap: 2px;
+  padding: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 0.5px 0 var(--glass-shine), 0 0 0 0.5px var(--glass-edge), var(--glass-shadow);
+}
+
+:root[data-platform='macos'] .find-input {
+  width: 230px;
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fill-quiet);
+}
+
+:root[data-platform='macos'] .find-input:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mac-accent) 45%, transparent);
+}
+
+:root[data-platform='macos'] .find-bar.no-match .find-input {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 70%, transparent);
+}
+
+:root[data-platform='macos'] .find-count {
+  color: var(--label-2);
+  font-size: 11px;
+}
+
+/* ---------- banners ---------- */
+
+:root[data-platform='macos'] .banners {
+  top: 0;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+:root[data-platform='macos'] .banner {
+  margin-top: 6px;
+  padding: 6px 8px 6px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 0.5px 0 var(--glass-shine), 0 0 0 0.5px var(--glass-edge), var(--glass-shadow);
+}
+
+:root[data-platform='macos'] .banner > .icon {
+  color: var(--mac-accent);
+}
+
+/* ---------- sheets (modal dialogs) ---------- */
+
+:root[data-platform='macos'] .modal-backdrop {
+  background: rgba(0, 0, 0, 0.14);
+  animation: mac-fade 160ms var(--ease);
+}
+
+:root[data-platform='macos'][data-theme='dark'] .modal-backdrop {
+  background: rgba(0, 0, 0, 0.36);
+}
+
+:root[data-platform='macos'] .modal {
+  border: 0;
+  border-radius: 22px;
+  background: var(--sheet-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 0.5px 0 var(--glass-shine), 0 0 0 0.5px var(--glass-edge), 0 24px 70px rgba(0, 0, 0, 0.28);
+  animation: mac-sheet 220ms var(--ease);
+}
+
+:root[data-platform='macos'] .modal-head {
+  padding: 14px 14px 8px 20px;
+}
+
+:root[data-platform='macos'] .modal-head h2 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+:root[data-platform='macos'] .settings-tab {
+  padding: 5px 10px;
+  border-radius: 7px;
+  color: var(--label);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+:root[data-platform='macos'] .settings-tab:hover {
+  background: var(--fill-quiet);
+}
+
+:root[data-platform='macos'] .settings-tab[aria-selected='true'] {
+  background: var(--mac-accent-soft);
+  color: var(--mac-accent);
+}
+
+:root[data-platform='macos'] .shortcuts td {
+  border-bottom-color: var(--separator);
+}
+
+:root[data-platform='macos'] .shortcuts-group {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--label-2);
+}
+
+:root[data-platform='macos'] .about h3,
+:root[data-platform='macos'] .wordmark {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- welcome ---------- */
+
+:root[data-platform='macos'] .welcome-logo.app-icon {
+  width: 112px;
+  height: 112px;
+  margin-bottom: 4px;
+  -webkit-user-drag: none;
+}
+
+:root[data-platform='macos'] .welcome-tag {
+  color: var(--label-2);
+  font-size: 14px;
+}
+
+:root[data-platform='macos'] .btn.primary:has(kbd) {
+  padding: 7px 10px 7px 16px;
+  font-size: 13px;
+}
+
+:root[data-platform='macos'] .dropzone {
+  border: 1.5px dashed var(--label-3);
+  border-radius: 14px;
+  color: var(--label-2);
+}
+
+:root[data-platform='macos'] .welcome-recent-wrap h2 {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--label-2);
+}
+
+:root[data-platform='macos'] .drop-overlay {
+  background: color-mix(in srgb, var(--bg-app) 55%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+:root[data-platform='macos'] .drop-card {
+  border: 0;
+  border-radius: 22px;
+  background: var(--glass-strong);
+  color: var(--label);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 2px var(--mac-accent), 0 18px 50px rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- toasts: HUD capsule ---------- */
+
+:root[data-platform='macos'] .toast {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--hud);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  color: #fff;
+  font-weight: 500;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.12), 0 10px 30px rgba(0, 0, 0, 0.25);
+  animation: mac-toast 220ms var(--ease);
+}
+
+:root[data-platform='macos'] .toast.error {
+  background: color-mix(in srgb, var(--danger) 88%, #000);
+}
+
+@keyframes mac-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes mac-sheet {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+
+@keyframes mac-toast {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-platform='macos'] {
+    --glass: var(--bg-raised);
+    --glass-strong: var(--bg-raised);
+    --sheet-bg: var(--bg-raised);
+  }
+}
+
+@media print {
+  :root[data-platform='macos'] .toolbar::before {
+    display: none;
+  }
+  :root[data-platform='macos'] .viewport {
+    padding-top: 0 !important;
+  }
+  :root[data-platform='macos'] .app:not(.no-sidebar) .canvas {
+    margin-left: 0 !important;
+  }
+}

@@ -18,7 +18,13 @@ import { FindBar } from './find';
 import { recentRow, Sidebar } from './sidebar';
 import { LayoutPanel, openSettings, type SettingsTab } from './settings-ui';
 import { checkForUpdates, meta, openAbout, openShortcuts, releasesApi, wordmark } from './dialogs';
-import { LANGUAGES, resolveLanguage, systemLanguage, t } from '../i18n';
+import { LANGUAGES, resolveLanguage, systemLanguage, t, type StringKey } from '../i18n';
+import { isMac, keys, keysIn } from './platform';
+import macIconUrl from '../../../assets/brand/svg/mdvibe-icon-macos.svg?url';
+import type { MenuState } from '../core/backend';
+
+/** "Show in Finder" on a Mac, "Open File Location" elsewhere. */
+const LOCATE = (): StringKey => (isMac() ? 'mac.showInFinder' : 'menu.openLocation');
 
 const ZOOM_STEPS = [0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 /** Above this size the document opens in Source view first (rendering is offered). */
@@ -53,6 +59,8 @@ export class App {
   private lastSavedJson = '';
   private changedOnDisk = false;
   private pageSheet = new CSSStyleSheet();
+  private menuQueued = false;
+  private menuLabelsSent = false;
 
   // DOM
   private root!: HTMLElement;
@@ -99,32 +107,40 @@ export class App {
     const renderMs = performance.now() - t0;
 
     // Show the window after the first paint (no white flash).
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        void this.backend.ready({ renderMs, docBytes: this.doc?.bytes });
-        this.viewport.focus({ preventScroll: true });
-      }),
-    );
+    const shown = () => {
+      void this.backend.ready({ renderMs, docBytes: this.doc?.bytes });
+      this.viewport.focus({ preventScroll: true });
+    };
+    // A hidden WKWebView (macOS) runs no animation frames until the window is shown.
+    if (document.hidden) window.setTimeout(shown, 0);
+    else requestAnimationFrame(() => requestAnimationFrame(shown));
   }
 
   private buildDom(): void {
     const iconBtn = (ic: string, label: string, onclick: (e: MouseEvent) => void, extra: Record<string, string> = {}) =>
       h('button', { type: 'button', class: 'icon-btn', title: label, 'aria-label': label, onclick: onclick as EventListener, ...extra }, icon(ic));
 
-    this.titleEl = h('div', { class: 'doc-title', title: '' });
-    this.layoutBtn = iconBtn(ICONS.type, t('toolbar.layout'), () => this.layoutPanel.toggle(this.layoutBtn), { 'aria-haspopup': 'dialog', 'aria-expanded': 'false' });
-    this.menuBtn = iconBtn(ICONS.more, t('toolbar.menu'), () => this.openMainMenu(), { 'aria-haspopup': 'menu', 'aria-expanded': 'false' });
+    this.layoutBtn = iconBtn(ICONS.type, keysIn(t('toolbar.layout')), () => this.layoutPanel.toggle(this.layoutBtn), { 'aria-haspopup': 'dialog', 'aria-expanded': 'false' });
+    this.menuBtn = iconBtn(ICONS.more, keysIn(t('toolbar.menu')), () => this.openMainMenu(), { 'aria-haspopup': 'menu', 'aria-expanded': 'false' });
     this.themeBtn = iconBtn(ICONS.monitor, '', () => this.cycleTheme());
+    // On macOS the toolbar is the title bar: it moves the window and holds the window controls.
+    const drag: Record<string, string> = isMac() ? { 'data-tauri-drag-region': '' } : {};
+    this.titleEl = h('div', { class: 'doc-title', title: '', ...drag });
     this.toolbar = h(
       'header',
-      { class: 'toolbar' },
-      iconBtn(ICONS.sidebar, `${t('menu.sidebar')} (Ctrl+Shift+B)`, () => this.toggleSidebar()),
+      { class: 'toolbar', ...drag },
+      iconBtn(ICONS.sidebar, `${t('menu.sidebar')} (${keys('Ctrl+Shift+B')})`, () => this.toggleSidebar()),
       this.titleEl,
-      h('div', { class: 'toolbar-spacer' }),
-      iconBtn(ICONS.search, `${t('menu.find')} (Ctrl+F)`, () => this.openFind()),
-      this.themeBtn,
-      this.layoutBtn,
-      this.menuBtn,
+      h('div', { class: 'toolbar-spacer', ...drag }),
+      // One group of controls (on macOS: one piece of glass; elsewhere: no box).
+      h(
+        'div',
+        { class: 'toolbar-group' },
+        iconBtn(ICONS.search, `${t('menu.find')} (${keys('Ctrl+F')})`, () => this.openFind()),
+        this.themeBtn,
+        this.layoutBtn,
+        this.menuBtn,
+      ),
     );
 
     this.sidebar = new Sidebar({
@@ -237,6 +253,7 @@ export class App {
     this.pageSheet.replaceSync(pageRule(s));
     this.root.classList.toggle('no-sidebar', !s.ui.sidebarVisible);
     this.sidebar.setTab(s.ui.sidebarTab, false);
+    this.syncMenu();
 
     if (!before || before.appearance.theme !== s.appearance.theme) {
       void this.backend.setTheme(s.appearance.theme === 'system' ? null : s.appearance.theme).catch(() => {});
@@ -267,7 +284,7 @@ export class App {
     const theme = this.settings.appearance.theme;
     const ic = theme === 'light' ? ICONS.sun : theme === 'dark' ? ICONS.moon : ICONS.monitor;
     this.themeBtn.replaceChildren(icon(ic));
-    const label = t('toolbar.theme', { mode: this.themeLabel(theme) });
+    const label = keysIn(t('toolbar.theme', { mode: this.themeLabel(theme) }));
     this.themeBtn.title = label;
     this.themeBtn.setAttribute('aria-label', label);
   }
@@ -509,6 +526,7 @@ export class App {
   private setSourceView(on: boolean): void {
     if (!this.doc || this.sourceView === on) return;
     this.sourceView = on;
+    this.syncMenu();
     if (!on) this.removeBanner('large');
     void this.renderDocument(false);
   }
@@ -531,10 +549,10 @@ export class App {
       h(
         'div',
         { class: 'welcome' },
-        icon(ICONS.logo, 'welcome-logo'),
+        isMac() ? h('img', { class: 'welcome-logo app-icon', src: macIconUrl, alt: '' }) : icon(ICONS.logo, 'welcome-logo'),
         wordmark('h1'),
         h('p', { class: 'welcome-tag' }, meta.tagline),
-        h('button', { type: 'button', class: 'btn primary', onclick: () => void this.openDialog() }, icon(ICONS.folder), h('span', {}, t('welcome.open')), h('kbd', {}, 'Ctrl+O')),
+        h('button', { type: 'button', class: 'btn primary', onclick: () => void this.openDialog() }, icon(ICONS.folder), h('span', {}, t('welcome.open')), h('kbd', {}, keys('Ctrl+O'))),
         h('div', { class: 'dropzone' }, t('welcome.drop')),
         items.length ? h('div', { class: 'welcome-recent-wrap' }, h('h2', {}, t('sidebar.recent')), list) : null,
       ),
@@ -583,7 +601,12 @@ export class App {
   private setTitle(name: string, path: string): void {
     this.titleEl.textContent = name;
     this.titleEl.title = path;
-    document.title = name ? `${name} — ${meta.productName}` : meta.productName;
+    // macOS: the folder as the window subtitle, as Finder-based apps show it.
+    if (isMac()) this.titleEl.dataset.sub = path.split(/[\\/]/).slice(-2, -1)[0] ?? '';
+    // macOS titles windows by their content, never by the app name.
+    if (isMac()) document.title = name || meta.productName;
+    else document.title = name ? `${name} — ${meta.productName}` : meta.productName;
+    this.syncMenu();
   }
 
   /** Opens a path: here if this window is empty, otherwise in a new instance. */
@@ -638,7 +661,7 @@ export class App {
   private recentMenu(it: RecentItem, at: { x: number; y: number } | HTMLElement): void {
     const entries: MenuEntry[] = [
       { label: t('recent.open'), action: () => this.openRecent(it), disabled: !it.exists },
-      { label: t('menu.openLocation'), action: () => this.reveal(it.path), disabled: !it.exists },
+      { label: t(LOCATE()), action: () => this.reveal(it.path), disabled: !it.exists },
       { label: t('menu.copyPath'), action: () => void this.copy(it.path) },
       'separator',
       { label: it.pinned ? t('recent.unpin') : t('recent.pin'), action: () => void this.backend.recentSetPinned(it.path, !it.pinned).then(() => this.refreshRecent()) },
@@ -749,7 +772,7 @@ export class App {
           toast(t('toast.openedNewWindow'));
           break;
         case 'localFile':
-          toast(t('toast.localFile'), { action: { label: t('menu.openLocation'), run: () => this.reveal(r.path) } });
+          toast(t('toast.localFile'), { action: { label: t(LOCATE()), run: () => this.reveal(r.path) } });
           break;
         case 'missing':
           toast(t('toast.linkMissing', { path: r.path }), { kind: 'error' });
@@ -791,7 +814,7 @@ export class App {
     const hasDoc = !!this.doc;
     const s = this.settings;
     const m = meta.urls;
-    const help: MenuEntry[] = [{ label: t('menu.shortcuts'), shortcut: 'F1', action: () => openShortcuts() }];
+    const help: MenuEntry[] = [{ label: t('menu.shortcuts'), shortcut: keys('F1'), action: () => openShortcuts() }];
     if (releasesApi(m.repository)) help.push({ label: t('menu.checkUpdates'), action: () => void checkForUpdates(this.info.version, (u) => this.openUrl(u)) });
     if (m.repository) help.push({ label: t('menu.repository'), action: () => this.openUrl(m.repository) });
     if (m.issues) help.push({ label: t('menu.reportIssue'), action: () => this.openUrl(m.issues) });
@@ -799,12 +822,12 @@ export class App {
     help.push('separator', { label: t('menu.logFolder'), action: () => void this.backend.openLogFolder().catch(() => {}) }, { label: t('menu.about', { product: meta.productName }), action: () => this.about() });
 
     const entries: MenuEntry[] = [
-      { label: t('menu.open'), shortcut: 'Ctrl+O', action: () => void this.openDialog() },
+      { label: t('menu.open'), shortcut: keys('Ctrl+O'), action: () => void this.openDialog() },
       { label: t('menu.openRecent'), submenu: this.recentSubmenu },
-      { label: t('menu.newWindow'), shortcut: 'Ctrl+N', action: () => void this.backend.openInNewWindow(null) },
+      { label: t('menu.newWindow'), shortcut: keys('Ctrl+N'), action: () => void this.backend.openInNewWindow(null) },
       'separator',
-      { label: t('menu.reload'), shortcut: 'F5', disabled: !hasDoc, action: () => void this.reload(true) },
-      { label: t('menu.openLocation'), disabled: !hasDoc, action: () => this.doc && this.reveal(this.doc.path) },
+      { label: t('menu.reload'), shortcut: keys('F5'), disabled: !hasDoc, action: () => void this.reload(true) },
+      { label: t(LOCATE()), disabled: !hasDoc, action: () => this.doc && this.reveal(this.doc.path) },
       {
         label: t('menu.copy'),
         disabled: !hasDoc,
@@ -815,36 +838,36 @@ export class App {
         ],
       },
       'separator',
-      { label: t('menu.print'), shortcut: 'Ctrl+P', disabled: !hasDoc, action: () => void this.print() },
-      { label: t('menu.savePdf'), shortcut: 'Ctrl+Shift+S', disabled: !hasDoc, action: () => void this.savePdf() },
+      { label: t('menu.print'), shortcut: keys('Ctrl+P'), disabled: !hasDoc, action: () => void this.print() },
+      { label: t(isMac() ? 'mac.exportPdf' : 'menu.savePdf'), shortcut: keys('Ctrl+Shift+S'), disabled: !hasDoc, action: () => void this.savePdf() },
       'separator',
       {
         label: t('menu.view'),
         submenu: (): MenuEntry[] => [
-          { label: t('menu.sidebar'), shortcut: 'Ctrl+Shift+B', checked: s.ui.sidebarVisible, action: () => this.toggleSidebar() },
+          { label: t('menu.sidebar'), shortcut: keys('Ctrl+Shift+B'), checked: s.ui.sidebarVisible, action: () => this.toggleSidebar() },
           { label: t('sidebar.outline'), action: () => this.showSidebarTab('outline') },
           { label: t('sidebar.recent'), action: () => this.showSidebarTab('recent') },
           'separator',
-          { label: t('menu.source'), shortcut: 'Ctrl+U', checked: this.sourceView, disabled: !hasDoc, action: () => this.setSourceView(!this.sourceView) },
+          { label: t('menu.source'), shortcut: keys('Ctrl+U'), checked: this.sourceView, disabled: !hasDoc, action: () => this.setSourceView(!this.sourceView) },
           { label: t('menu.pageView'), checked: s.page.view === 'page', action: () => this.update((x) => { x.page.view = x.page.view === 'page' ? 'continuous' : 'page'; }) },
-          { label: t('menu.layout'), shortcut: 'Ctrl+Shift+L', action: () => this.layoutPanel.open(this.layoutBtn) },
+          { label: t('menu.layout'), shortcut: keys('Ctrl+Shift+L'), action: () => this.layoutPanel.open(this.layoutBtn) },
           'separator',
-          { label: t('menu.zoomIn'), shortcut: 'Ctrl++', action: () => this.stepZoom(1) },
-          { label: t('menu.zoomOut'), shortcut: 'Ctrl+-', action: () => this.stepZoom(-1) },
-          { label: t('menu.zoomReset', { pct: Math.round(this.zoom * 100) }), shortcut: 'Ctrl+0', action: () => this.setZoom(1) },
+          { label: t('menu.zoomIn'), shortcut: keys('Ctrl++'), action: () => this.stepZoom(1) },
+          { label: t('menu.zoomOut'), shortcut: keys('Ctrl+-'), action: () => this.stepZoom(-1) },
+          { label: t('menu.zoomReset', { pct: Math.round(this.zoom * 100) }), shortcut: keys('Ctrl+0'), action: () => this.setZoom(1) },
           'separator',
-          { label: t('menu.fullscreen'), shortcut: 'F11', checked: this.fullscreen, action: () => void this.toggleFullscreen() },
+          { label: t('menu.fullscreen'), shortcut: keys('F11'), checked: this.fullscreen, action: () => void this.toggleFullscreen() },
           { label: t('menu.onTop'), checked: this.alwaysOnTop, action: () => void this.toggleOnTop() },
         ],
       },
-      { label: t('menu.find'), shortcut: 'Ctrl+F', disabled: !hasDoc, action: () => this.openFind() },
+      { label: t('menu.find'), shortcut: keys('Ctrl+F'), disabled: !hasDoc, action: () => this.openFind() },
       {
         label: t('menu.theme'),
         submenu: (): MenuEntry[] =>
           App.THEME_ORDER.map((th) => ({
             label: this.themeLabel(th),
             checked: s.appearance.theme === th,
-            shortcut: th === 'system' ? 'Ctrl+Shift+T' : undefined,
+            shortcut: th === 'system' ? keys('Ctrl+Shift+T') : undefined,
             action: () => this.setTheme(th),
           })),
       },
@@ -860,12 +883,87 @@ export class App {
           ...LANGUAGES.map((l) => ({ label: l.name, checked: s.appearance.language === l.id, action: () => this.setLanguageSetting(l.id) })),
         ],
       },
-      { label: t('menu.settings'), shortcut: 'Ctrl+,', action: () => this.openSettings() },
+      { label: t('menu.settings'), shortcut: keys('Ctrl+,'), action: () => this.openSettings() },
       { label: t('menu.help'), submenu: () => help },
       'separator',
-      { label: t('menu.close'), shortcut: 'Ctrl+W', action: () => void this.backend.closeWindow() },
+      { label: t('menu.close'), shortcut: keys('Ctrl+W'), action: () => void this.backend.closeWindow() },
     ];
     openMenu(entries, this.menuBtn);
+  }
+
+  /** A command from the macOS menu bar, for this window. */
+  private onMenu(id: string): void {
+    closeAllMenus();
+    const doc = this.doc;
+    const urls = meta.urls;
+    switch (id) {
+      case 'about': return this.about();
+      case 'settings': return this.openSettings();
+      case 'open': return void this.openDialog();
+      case 'reload': return void this.reload(true);
+      case 'reveal': return void (doc && this.reveal(doc.path));
+      case 'export-pdf': return void this.savePdf();
+      case 'print': return void this.print();
+      case 'copy-path': return void (doc && this.copy(doc.path));
+      case 'copy-source': return void (doc && this.copy(doc.text));
+      case 'find': return this.openFind();
+      case 'find-next':
+      case 'find-prev':
+        if (!this.find.isOpen) return this.openFind();
+        return this.find.next(id === 'find-next' ? 1 : -1);
+      case 'sidebar': return this.toggleSidebar();
+      case 'outline': return this.showSidebarTab('outline');
+      case 'recent-tab': return this.showSidebarTab('recent');
+      case 'source': return this.setSourceView(!this.sourceView);
+      case 'page-view': return this.update((x) => { x.page.view = x.page.view === 'page' ? 'continuous' : 'page'; });
+      case 'layout': return this.layoutPanel.open(this.layoutBtn);
+      case 'theme-system':
+      case 'theme-light':
+      case 'theme-dark':
+        return this.setTheme(id.slice('theme-'.length) as Theme);
+      case 'theme-next': return this.cycleTheme();
+      case 'zoom-in': return this.stepZoom(1);
+      case 'zoom-out': return this.stepZoom(-1);
+      case 'zoom-reset': return this.setZoom(1);
+      case 'on-top': return void this.toggleOnTop();
+      case 'shortcuts': return openShortcuts();
+      case 'updates': return void checkForUpdates(this.info.version, (u) => this.openUrl(u));
+      case 'repository': return void (urls.repository && this.openUrl(urls.repository));
+      case 'issues': return void (urls.issues && this.openUrl(urls.issues));
+      case 'support': return void (urls.support && this.openUrl(urls.support));
+      case 'log-folder': return void this.backend.openLogFolder().catch(() => {});
+      case 'recent-clear': return this.clearRecent();
+    }
+  }
+
+  /** Keeps the macOS menu bar in step with this window: labels once, state on every change and on focus. */
+  private syncMenu(): void {
+    if (!isMac() || this.menuQueued) return;
+    this.menuQueued = true;
+    queueMicrotask(() => {
+      this.menuQueued = false;
+      const s = this.settings;
+      const hasDoc = !!this.doc;
+      const state: MenuState = {
+        checks: {
+          sidebar: s.ui.sidebarVisible,
+          source: this.sourceView,
+          'page-view': s.page.view === 'page',
+          'on-top': this.alwaysOnTop,
+          'theme-system': s.appearance.theme === 'system',
+          'theme-light': s.appearance.theme === 'light',
+          'theme-dark': s.appearance.theme === 'dark',
+        },
+        enabled: Object.fromEntries(
+          ['reload', 'reveal', 'export-pdf', 'print', 'copy-path', 'copy-source', 'find', 'find-next', 'find-prev', 'source'].map((id) => [id, hasDoc]),
+        ),
+      };
+      if (!this.menuLabelsSent) {
+        this.menuLabelsSent = true;
+        state.labels = macMenuLabels();
+      }
+      this.backend.menuSync(state);
+    });
   }
 
   private onContextMenu(e: MouseEvent): void {
@@ -892,11 +990,11 @@ export class App {
     const code = target.closest('.code-frame')?.querySelector('pre code');
     if (code) entries.push({ label: t('ctx.copyCode'), action: () => void this.copy(code.textContent ?? '') }, 'separator');
     entries.push(
-      { label: t('ctx.copy'), shortcut: 'Ctrl+C', disabled: !sel, action: () => void this.copy(sel) },
-      { label: t('ctx.selectAll'), shortcut: 'Ctrl+A', action: () => this.selectAll() },
+      { label: t('ctx.copy'), shortcut: keys('Ctrl+C'), disabled: !sel, action: () => void this.copy(sel) },
+      { label: t('ctx.selectAll'), shortcut: keys('Ctrl+A'), action: () => this.selectAll() },
     );
     if (this.doc) {
-      entries.push('separator', { label: this.sourceView ? t('ctx.showRendered') : t('ctx.showSource'), shortcut: 'Ctrl+U', action: () => this.setSourceView(!this.sourceView) });
+      entries.push('separator', { label: this.sourceView ? t('ctx.showRendered') : t('ctx.showSource'), shortcut: keys('Ctrl+U'), action: () => this.setSourceView(!this.sourceView) });
     }
     openMenu(entries, { x: e.clientX, y: e.clientY });
   }
@@ -965,6 +1063,7 @@ export class App {
 
   private async toggleOnTop(): Promise<void> {
     this.alwaysOnTop = !this.alwaysOnTop;
+    this.syncMenu();
     await this.backend.setAlwaysOnTop(this.alwaysOnTop).catch(() => {});
     toast(this.alwaysOnTop ? t('toast.onTop') : t('toast.notOnTop'));
   }
@@ -1011,6 +1110,18 @@ export class App {
     if (!this.doc) return;
     await this.prepareForPrint();
     const restore = this.absolutizeLinks();
+    if (isMac()) {
+      // WKWebView has no window.print(): the native print operation, with the page setup.
+      try {
+        await this.backend.printDocument(pdfOptions(this.settings, this.doc.name));
+      } catch (e) {
+        this.backend.log('error', `print failed: ${e}`);
+        toast(String(e), { kind: 'error' });
+      } finally {
+        restore();
+      }
+      return;
+    }
     window.addEventListener('afterprint', restore, { once: true });
     window.print();
   }
@@ -1021,7 +1132,7 @@ export class App {
     const restore = this.absolutizeLinks();
     try {
       const path = await this.backend.exportPdf(pdfOptions(this.settings, this.doc.name));
-      if (path) toast(t('toast.pdfSaved'), { action: { label: t('menu.openLocation'), run: () => this.reveal(path) } });
+      if (path) toast(t('toast.pdfSaved'), { action: { label: t(LOCATE()), run: () => this.reveal(path) } });
     } catch (e) {
       this.backend.log('error', `pdf failed: ${e}`);
       toast(t('error.pdf', { error: String(e) }), { kind: 'error' });
@@ -1067,6 +1178,9 @@ export class App {
     });
     await this.backend.on('settings-changed', () => void this.onExternalSettings());
     await this.backend.on('recent-changed', () => void this.refreshRecent());
+    // macOS: documents from Finder/Dock for this empty window, and menu bar commands.
+    await this.backend.on('open-file', (path) => void this.openPath(path));
+    await this.backend.on('menu', (id) => this.onMenu(id));
     await this.backend.onFileDrop(
       (paths) => void this.onDrop(paths),
       (over) => {
@@ -1091,6 +1205,24 @@ export class App {
   }
 
   private bindGlobalEvents(): void {
+    // The menu bar belongs to the focused window; inactive Mac windows look subdued.
+    window.addEventListener('focus', () => {
+      document.documentElement.classList.remove('window-inactive');
+      this.syncMenu();
+    });
+    window.addEventListener('blur', () => document.documentElement.classList.add('window-inactive'));
+    if (isMac()) {
+      // Full screen from the green button or the menu bar: keep the layout in step.
+      let fsTimer = 0;
+      window.addEventListener('resize', () => {
+        window.clearTimeout(fsTimer);
+        fsTimer = window.setTimeout(async () => {
+          const on = await this.backend.isFullscreen().catch(() => this.fullscreen);
+          this.fullscreen = on;
+          this.root.classList.toggle('fullscreen', on);
+        }, 120);
+      });
+    }
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
       if (this.settings.appearance.theme === 'system') document.documentElement.dataset.theme = this.resolvedTheme();
     });
@@ -1100,7 +1232,8 @@ export class App {
 
     let altAlone = false;
     document.addEventListener('keydown', (e) => {
-      altAlone = e.key === 'Alt' && !e.ctrlKey && !e.shiftKey && !e.metaKey;
+      // Option alone types characters on a Mac; the menu bar is the menu there.
+      altAlone = !isMac() && e.key === 'Alt' && !e.ctrlKey && !e.shiftKey && !e.metaKey;
       this.onKey(e);
     });
     document.addEventListener('keyup', (e) => {
@@ -1124,6 +1257,7 @@ export class App {
       fn();
     };
 
+    if (isMac() && e.metaKey && e.ctrlKey && !e.shiftKey && key === 's') return run(() => this.toggleSidebar());
     if (ctrl && e.shiftKey) {
       switch (key) {
         case 'b': return run(() => this.toggleSidebar());
@@ -1172,6 +1306,68 @@ export class App {
 }
 
 export { closeAllMenus, closeModal };
+
+/** Labels of the macOS menu bar items, by item id (see src-tauri/src/mac.rs). */
+function macMenuLabels(): Record<string, string> {
+  const product = meta.productName;
+  return {
+    about: t('menu.about', { product }),
+    settings: t('menu.settings'),
+    services: t('mac.services'),
+    hide: t('mac.hide', { product }),
+    'hide-others': t('mac.hideOthers'),
+    'show-all': t('mac.showAll'),
+    quit: t('mac.quit', { product }),
+    file: t('mac.file'),
+    'new-window': t('menu.newWindow'),
+    open: t('menu.open'),
+    'open-recent': t('menu.openRecent'),
+    'recent-clear': t('mac.clearMenu'),
+    'recent-none': t('mac.noRecent'),
+    close: t('menu.close'),
+    reload: t('menu.reload'),
+    reveal: t('mac.showInFinder'),
+    'export-pdf': t('mac.exportPdf'),
+    print: t('menu.print'),
+    edit: t('mac.edit'),
+    copy: t('ctx.copy'),
+    'copy-path': t('menu.copyPath'),
+    'copy-source': t('menu.copySource'),
+    'select-all': t('ctx.selectAll'),
+    'find-menu': t('mac.findMenu'),
+    find: t('menu.find'),
+    'find-next': t('mac.findNext'),
+    'find-prev': t('mac.findPrevious'),
+    view: t('menu.view'),
+    sidebar: t('menu.sidebar'),
+    outline: t('sidebar.outline'),
+    'recent-tab': t('sidebar.recent'),
+    source: t('menu.source'),
+    'page-view': t('menu.pageView'),
+    layout: t('menu.layout'),
+    theme: t('menu.theme'),
+    'theme-system': t('appearance.theme.system'),
+    'theme-light': t('appearance.theme.light'),
+    'theme-dark': t('appearance.theme.dark'),
+    'theme-next': t('mac.nextTheme'),
+    'zoom-reset': t('mac.actualSize'),
+    'zoom-in': t('menu.zoomIn'),
+    'zoom-out': t('menu.zoomOut'),
+    'on-top': t('menu.onTop'),
+    fullscreen: t('mac.enterFullScreen'),
+    window: t('mac.window'),
+    minimize: t('mac.minimize'),
+    zoom: t('mac.zoom'),
+    'bring-all-to-front': t('mac.bringAllToFront'),
+    help: t('menu.help'),
+    shortcuts: t('menu.shortcuts'),
+    repository: t('menu.repository'),
+    issues: t('menu.reportIssue'),
+    support: t('menu.support'),
+    updates: t('menu.checkUpdates'),
+    'log-folder': t('menu.logFolder'),
+  };
+}
 
 /**
  * Layout-independent shortcut key: Ctrl+F must work with a Cyrillic (or any

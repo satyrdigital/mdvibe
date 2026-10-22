@@ -46,6 +46,8 @@ export interface StartupInfo {
   imageBase: string;
   webviewVersion: string | null;
   logDir: string;
+  /** macOS: the user picked an accent color, controls follow it. */
+  systemAccent: boolean;
 }
 
 export interface PdfOptions {
@@ -56,6 +58,13 @@ export interface PdfOptions {
   backgrounds: boolean;
   headerFooter: boolean;
   title: string;
+}
+
+/** Native menu state (macOS): labels by item id, checkmarks and enabled flags. */
+export interface MenuState {
+  labels?: Record<string, string>;
+  checks?: Record<string, boolean>;
+  enabled?: Record<string, boolean>;
 }
 
 export interface Backend {
@@ -76,11 +85,15 @@ export interface Backend {
   recentSetPinned(path: string, pinned: boolean): Promise<void>;
   recentClear(): Promise<void>;
   exportPdf(options: PdfOptions): Promise<string | null>;
+  /** Native print dialog (macOS); resolves when it closes. */
+  printDocument(options: PdfOptions): Promise<void>;
+  menuSync(state: MenuState): void;
   log(level: 'info' | 'warn' | 'error', message: string): void;
   openLogFolder(): Promise<void>;
   ready(metrics: { renderMs?: number; docBytes?: number }): Promise<void>;
   on(event: 'doc-changed', cb: (p: { exists: boolean }) => void): Promise<void>;
   on(event: 'settings-changed' | 'recent-changed', cb: () => void): Promise<void>;
+  on(event: 'open-file' | 'menu', cb: (p: string) => void): Promise<void>;
   onFileDrop(cb: (paths: string[]) => void, hover: (over: boolean) => void): Promise<void>;
   setFullscreen(on: boolean): Promise<void>;
   isFullscreen(): Promise<boolean>;
@@ -117,11 +130,15 @@ async function createTauriBackend(): Promise<Backend> {
     recentSetPinned: (path, pinned) => invoke('recent_set_pinned', { path, pinned }),
     recentClear: () => invoke('recent_clear'),
     exportPdf: (options) => invoke('export_pdf', { options }),
+    printDocument: (options) => invoke('print_document', { options }),
+    menuSync: (menu) => void invoke('menu_sync', { menu }).catch(() => {}),
     log: (level, message) => void invoke('log_message', { level, message }).catch(() => {}),
     openLogFolder: () => invoke('open_log_folder'),
     ready: (metrics) => invoke('app_ready', { metrics }),
+    // Only events for this window (or for all windows): on macOS every
+    // document window lives in the same process.
     on: async (event: string, cb: (p: never) => void) => {
-      await listen(event, (e) => cb(e.payload as never));
+      await listen(event, (e) => cb(e.payload as never), { target: { kind: 'WebviewWindow', label: win.label } });
     },
     onFileDrop: async (cb, hover) => {
       await getCurrentWebview().onDragDropEvent((e) => {

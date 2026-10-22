@@ -17,6 +17,8 @@ fn main() {
             "recent_set_pinned",
             "recent_clear",
             "export_pdf",
+            "print_document",
+            "menu_sync",
             "log_message",
             "open_log_folder",
             "app_ready",

@@ -33,13 +33,15 @@ export function createMockBackend(): Backend {
     startupInfo: async () => ({
       productName: 'MDVibe',
       version: '0.0.0-dev',
-      platform: 'browser',
+      // `?platform=macos` previews the Mac look in a browser.
+      platform: params.get('platform') ?? 'browser',
       debug: true,
       launchFile: params.has('empty') ? null : 'C:\\Docs\\feature-tour.md',
       settings,
       imageBase: '',
       webviewVersion: null,
       logDir: '',
+      systemAccent: params.has('accent'),
     }),
     loadSettings: async () => settings,
     openNotices: async () => {},
@@ -63,6 +65,8 @@ export function createMockBackend(): Backend {
       window.print();
       return null;
     },
+    printDocument: async () => window.print(),
+    menuSync: () => {},
     log: (level, message) => console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](message),
     openLogFolder: async () => {},
     ready: async () => {},
