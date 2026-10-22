@@ -19,6 +19,8 @@ fn main() {
             "export_pdf",
             "print_document",
             "menu_sync",
+            "folder_access",
+            "grant_folder_access",
             "log_message",
             "open_log_folder",
             "app_ready",

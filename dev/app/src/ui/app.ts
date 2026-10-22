@@ -393,6 +393,24 @@ export class App {
     }
     await this.renderDocument(false);
     void this.refreshRecent();
+    void this.checkFolderAccess();
+  }
+
+  /** App Store sandbox (macOS): images next to the document need its folder allowed once. */
+  private async checkFolderAccess(): Promise<void> {
+    if (!isMac() || !this.doc || !this.article.querySelector(`img[src^="${this.info.imageBase}"]`)) return;
+    const { needed } = await this.backend.folderAccess().catch(() => ({ needed: false }));
+    if (!needed) return;
+    this.banner('folder', 'info', t('banner.folderAccess'), [
+      {
+        label: t('banner.allowFolder'),
+        run: async () => {
+          if (!(await this.backend.grantFolderAccess().catch(() => false))) return;
+          this.removeBanner('folder');
+          void this.renderDocument(true);
+        },
+      },
+    ]);
   }
 
   private async reload(user: boolean): Promise<void> {

@@ -88,6 +88,10 @@ export interface Backend {
   /** Native print dialog (macOS); resolves when it closes. */
   printDocument(options: PdfOptions): Promise<void>;
   menuSync(state: MenuState): void;
+  /** App Store sandbox (macOS): must the user allow the document's folder to show its images? */
+  folderAccess(): Promise<{ needed: boolean }>;
+  /** Asks for the document's folder; true when its images can be shown now. */
+  grantFolderAccess(): Promise<boolean>;
   log(level: 'info' | 'warn' | 'error', message: string): void;
   openLogFolder(): Promise<void>;
   ready(metrics: { renderMs?: number; docBytes?: number }): Promise<void>;
@@ -132,6 +136,8 @@ async function createTauriBackend(): Promise<Backend> {
     exportPdf: (options) => invoke('export_pdf', { options }),
     printDocument: (options) => invoke('print_document', { options }),
     menuSync: (menu) => void invoke('menu_sync', { menu }).catch(() => {}),
+    folderAccess: () => invoke('folder_access'),
+    grantFolderAccess: () => invoke('grant_folder_access'),
     log: (level, message) => void invoke('log_message', { level, message }).catch(() => {}),
     openLogFolder: () => invoke('open_log_folder'),
     ready: (metrics) => invoke('app_ready', { metrics }),

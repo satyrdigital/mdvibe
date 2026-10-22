@@ -16,6 +16,8 @@ mod logging;
 mod mac;
 mod pdf;
 mod recent;
+#[cfg(target_os = "macos")]
+mod sandbox;
 mod settings;
 mod storage;
 mod watcher;
@@ -63,6 +65,9 @@ pub struct AppState {
     pub recent: Recent,
     pub window_store: JsonStore,
     pub log_dir: PathBuf,
+    /// macOS App Store build: remembered access to documents and folders.
+    #[cfg(target_os = "macos")]
+    pub sandbox: Option<sandbox::Sandbox>,
 }
 
 /// Where a document from the system (Finder, Dock, `open`) should go.
@@ -385,6 +390,13 @@ pub fn run() {
                 recent: Recent::new(JsonStore::new(config_dir.join("recent.json"))),
                 window_store: JsonStore::new(local_dir.join("window-state.json")),
                 log_dir,
+                #[cfg(target_os = "macos")]
+                sandbox: sandbox::active().then(|| {
+                    let s =
+                        sandbox::Sandbox::new(JsonStore::new(config_dir.join("bookmarks.json")));
+                    s.restore();
+                    s
+                }),
             };
             app.manage(state);
 
@@ -470,6 +482,8 @@ pub fn run() {
             commands::export_pdf,
             commands::print_document,
             commands::menu_sync,
+            commands::folder_access,
+            commands::grant_folder_access,
             commands::log_message,
             commands::open_log_folder,
             commands::app_ready,

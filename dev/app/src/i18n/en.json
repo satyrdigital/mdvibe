@@ -244,5 +244,7 @@
   "mac.bringAllToFront": "Bring All to Front",
   "mac.clearMenu": "Clear Menu",
   "mac.nextTheme": "Next Theme",
-  "mac.noRecent": "No Recent Documents"
+  "mac.noRecent": "No Recent Documents",
+  "banner.folderAccess": "Allow access to this folder to show images.",
+  "banner.allowFolder": "Allow Access…"
 }

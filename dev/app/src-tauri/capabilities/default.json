@@ -33,6 +33,8 @@
     "allow-export-pdf",
     "allow-print-document",
     "allow-menu-sync",
+    "allow-folder-access",
+    "allow-grant-folder-access",
     "allow-log-message",
     "allow-open-log-folder",
     "allow-app-ready",

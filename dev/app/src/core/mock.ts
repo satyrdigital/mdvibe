@@ -67,6 +67,9 @@ export function createMockBackend(): Backend {
     },
     printDocument: async () => window.print(),
     menuSync: () => {},
+    // `?sandbox` previews the folder-access bar of the App Store build.
+    folderAccess: async () => ({ needed: params.has('sandbox') }),
+    grantFolderAccess: async () => true,
     log: (level, message) => console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](message),
     openLogFolder: async () => {},
     ready: async () => {},

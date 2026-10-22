@@ -244,5 +244,7 @@
   "mac.bringAllToFront": "Усі вікна на передній план",
   "mac.clearMenu": "Очистити меню",
   "mac.nextTheme": "Наступна тема",
-  "mac.noRecent": "Немає недавніх документів"
+  "mac.noRecent": "Немає недавніх документів",
+  "banner.folderAccess": "Дозвольте доступ до цієї папки, щоб показати зображення.",
+  "banner.allowFolder": "Дозволити доступ…"
 }

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
   <!-- Mac App Store build only (not used by the DMG, which is not sandboxed).
-       Sign with: codesign --entitlements macos/MDVibe.appstore.entitlements … -->
+       Passed to codesign as the entitlements file of the store build. -->
   <key>com.apple.security.app-sandbox</key>
   <true/>
   <!-- Documents the user opens (Finder, Open panel, drag and drop). -->

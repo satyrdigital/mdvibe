@@ -82,7 +82,12 @@ pub fn open_document<R: Runtime>(
         }
         // macOS titles windows by their document only; Windows adds the product.
         #[cfg(target_os = "macos")]
-        crate::mac::show_document(&window, &path, &doc.name);
+        {
+            crate::mac::show_document(&window, &path, &doc.name);
+            if let Some(sb) = &state.sandbox {
+                sb.remember_file(&path);
+            }
+        }
         #[cfg(not(target_os = "macos"))]
         {
             let product = window.app_handle().package_info().name.clone();
@@ -263,7 +268,12 @@ pub fn recent_set_pinned(state: State<'_, AppState>, path: String, pinned: bool)
 pub fn recent_clear<R: Runtime>(app: AppHandle<R>, state: State<'_, AppState>) {
     state.recent.clear();
     #[cfg(target_os = "macos")]
-    crate::mac::clear_system_recent(&app);
+    {
+        crate::mac::clear_system_recent(&app);
+        if let Some(sb) = &state.sandbox {
+            sb.forget_files();
+        }
+    }
     #[cfg(not(target_os = "macos"))]
     let _ = app;
 }
@@ -353,6 +363,61 @@ pub async fn print_document<R: Runtime>(
         let _ = (window, options);
         Err("Printing goes through the web view on this platform.".into())
     }
+}
+
+/// App Store sandbox (macOS): whether the images next to this window's
+/// document can be read, or the user has to allow its folder first.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FolderAccess {
+    pub needed: bool,
+}
+
+#[tauri::command]
+pub fn folder_access<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, AppState>,
+) -> FolderAccess {
+    #[cfg(target_os = "macos")]
+    if let (Some(sb), Some(doc)) = (&state.sandbox, state.doc_path(window.label())) {
+        let needed = !sb.covers_folder_of(&doc);
+        if needed {
+            log::info!("sandbox: the document folder is not allowed yet");
+        }
+        return FolderAccess { needed };
+    }
+    let _ = (window, state);
+    FolderAccess { needed: false }
+}
+
+/// Asks the user to allow the document's folder (Open panel, starting there)
+/// and remembers the answer. Returns whether the images can be shown now.
+#[tauri::command]
+pub async fn grant_folder_access<R: Runtime>(
+    window: WebviewWindow<R>,
+    state: State<'_, AppState>,
+) -> Result<bool, String> {
+    let Some(doc) = state.doc_path(window.label()) else {
+        return Ok(false);
+    };
+    #[cfg(target_os = "macos")]
+    if let Some(sb) = &state.sandbox {
+        let (tx, mut rx) = tauri::async_runtime::channel(1);
+        let mut dialog = window.dialog().file().set_parent(&window);
+        if let Some(dir) = doc.parent() {
+            dialog = dialog.set_directory(dir);
+        }
+        dialog.pick_folder(move |f| {
+            let _ = tx.try_send(f.and_then(|p| p.into_path().ok()));
+        });
+        let Some(folder) = rx.recv().await.flatten() else {
+            return Ok(false);
+        };
+        sb.remember_folder(&folder);
+        return Ok(sb.covers_folder_of(&doc));
+    }
+    let _ = doc;
+    Ok(true)
 }
 
 /// The renderer reports the state of the native menu (macOS): localized
