@@ -6,6 +6,25 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- macOS app (macOS 11 or later, Apple Silicon and Intel), distributed as a disk image:
+  - one app with a window per document; documents open from Finder, the Dock and
+    "Open With"; an already open document comes to the front; the app keeps running
+    after its last window closes;
+  - native menu bar in the interface language, ⌘ shortcuts shown throughout;
+  - Mac look: the toolbar is the title bar, controls and the sidebar float on glass over
+    the document, system font, the user's accent color, Dark Mode;
+  - Print and Save as PDF with the page setup from the reading settings;
+  - documents appear in the system's recent items (Dock, Apple menu);
+  - prepared for the Mac App Store sandbox: a one-time bar allows the document's folder
+    to show its images, Recent keeps working.
+- Third-party notices cover the macOS app.
+
+### Changed
+
+- Tauri 2.12.5.
+
 ## [0.1.0] - unreleased
 
 First public preview.
