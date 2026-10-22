@@ -1,11 +1,19 @@
-// Collects release artifacts into dist/:
+// Collects release artifacts into dist/.
+//
+// Windows:
 //   MDVibe-Setup.exe              installer under a stable name (for releases/latest/download/…)
 //   MDVibe-Setup-<v>.exe         NSIS installer (from the Tauri bundler)
 //   MDVibe-<v>-win-<arch>.zip     portable build (exe + notices + license info)
 //   SHA256SUMS.txt                checksums of everything above
+// macOS (the app is ad-hoc signed, not notarized):
+//   MDVibe-mac.dmg                disk image under a stable name
+//   MDVibe-<v>-mac-<arch>.dmg     disk image (arch: arm64, x64 or universal)
+//   SHA256SUMS-mac.txt            checksums of the two above
 //
-// Usage: node dev/scripts/package-release.mjs [--target x86_64-pc-windows-msvc]
+// Usage: node dev/scripts/package-release.mjs [--target <rust target triple>]
 // Run after `npm run app:build` (and after signing, if signing is configured).
+// macOS needs dmgbuild (`pip install dmgbuild`); set DMGBUILD_PYTHON to the
+// Python that has it (default: python3).
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -21,6 +29,34 @@ const arch = target?.startsWith('aarch64') ? 'arm64' : 'x64';
 const targetDir = path.join(root, 'dev', 'app', 'src-tauri', 'target', ...(target ? [target] : []), 'release');
 const dist = path.join(root, 'dist');
 fs.mkdirSync(dist, { recursive: true });
+
+const sha256 = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
+
+if (process.platform === 'darwin') {
+  packageMac();
+  process.exit(0);
+}
+
+function packageMac() {
+  const intel = target ? target.startsWith('x86_64') : process.arch === 'x64';
+  const macArch = target === 'universal-apple-darwin' ? 'universal' : intel ? 'x64' : 'arm64';
+  const app = path.join(targetDir, 'bundle', 'macos', `${meta.productName}.app`);
+  if (!fs.existsSync(app)) throw new Error(`missing ${app} — run npm run app:build first`);
+  execFileSync('codesign', ['--verify', '--deep', '--strict', app], { stdio: 'inherit' });
+  const out = `${meta.productName}-${v}-mac-${macArch}.dmg`;
+  const stable = `${meta.productName}-mac.dmg`;
+  fs.rmSync(path.join(dist, out), { force: true });
+  const assets = path.join(root, 'dev', 'app', 'src-tauri', 'macos');
+  const settings = path.join(assets, 'dmg-settings.py');
+  const python = process.env.DMGBUILD_PYTHON || 'python3';
+  execFileSync(python, ['-m', 'dmgbuild', '-s', settings, '-D', `app=${app}`, '-D', `assets=${assets}`, meta.productName, path.join(dist, out)], { stdio: 'inherit' });
+  fs.copyFileSync(path.join(dist, out), path.join(dist, stable));
+  const files = [stable, out];
+  fs.writeFileSync(path.join(dist, 'SHA256SUMS-mac.txt'), files.map((f) => `${sha256(path.join(dist, f))}  ${f}`).join('\n') + '\n');
+  for (const f of [...files, 'SHA256SUMS-mac.txt']) {
+    console.log(`${String(fs.statSync(path.join(dist, f)).size).padStart(10)}  dist/${f}`);
+  }
+}
 
 const exe = path.join(targetDir, `${meta.executableName}.exe`);
 if (!fs.existsSync(exe)) throw new Error(`missing ${exe} — run npm run app:build first`);
@@ -65,9 +101,9 @@ execFileSync(tar, ['-a', '-c', '-f', path.join(dist, zipOut), '-C', stage, '.'],
 // Checksums (all artifacts currently in dist/ for this version)
 const files = fs
   .readdirSync(dist)
-  .filter((f) => (f.includes(v) || f === stableOut) && !f.endsWith('.txt'))
+  .filter((f) => (f.includes(v) || f === stableOut) && !f.endsWith('.txt') && !f.endsWith('.dmg'))
   .sort();
-const sums = files.map((f) => `${crypto.createHash('sha256').update(fs.readFileSync(path.join(dist, f))).digest('hex')}  ${f}`);
+const sums = files.map((f) => `${sha256(path.join(dist, f))}  ${f}`);
 fs.writeFileSync(path.join(dist, 'SHA256SUMS.txt'), sums.join('\n') + '\n');
 for (const f of [...files, 'SHA256SUMS.txt']) {
   console.log(`${String(fs.statSync(path.join(dist, f)).size).padStart(10)}  dist/${f}`);

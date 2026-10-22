@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="840" viewBox="0 0 660 420">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FBFBF9"/>
+      <stop offset="1" stop-color="#ECEFFA"/>
+    </linearGradient>
+  </defs>
+  <rect width="660" height="420" fill="url(#g)"/>
+  <path d="M262 210 C 300 196, 360 196, 398 210" fill="none" stroke="#3B5BDB" stroke-opacity="0.55" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9"/>
+  <path d="M390 200 L402 211 L388 220" fill="none" stroke="#3B5BDB" stroke-opacity="0.7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="330" y="338" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="500" fill="#3c4152">Drag MDVibe to Applications</text>
+  <text x="330" y="362" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" fill="#7d8190">First launch: System Settings → Privacy &amp; Security → Open Anyway</text>
+</svg>

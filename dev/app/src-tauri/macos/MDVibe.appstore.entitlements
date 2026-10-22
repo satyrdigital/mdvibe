@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Mac App Store build only (not used by the DMG, which is not sandboxed).
+       Sign with: codesign --entitlements macos/MDVibe.appstore.entitlements … -->
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+  <!-- Documents the user opens (Finder, Open panel, drag and drop). -->
+  <key>com.apple.security.files.user-selected.read-write</key>
+  <true/>
+  <!-- Remembered access to a document's folder (images next to it) and to Recent documents. -->
+  <key>com.apple.security.files.bookmarks.app-scope</key>
+  <true/>
+  <!-- Remote images (only when the user allows them) and the update check. -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+</dict>
+</plist>
