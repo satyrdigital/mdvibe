@@ -216,7 +216,7 @@
   "menu.language": "Language",
   "appearance.language": "Language",
   "language.system": "System ({lang})",
-  "language.hint": "On first start MDVibe uses the Windows display language; English is used when that language is not available.",
+  "language.hint": "On first start MDVibe uses the system language; English is used when that language is not available.",
   "toast.theme": "Theme: {mode}",
   "shortcuts.theme": "Switch theme (System → Light → Dark)",
   "time.justNow": "just now",

@@ -216,7 +216,7 @@
   "menu.language": "Язык",
   "appearance.language": "Язык",
   "language.system": "Системный ({lang})",
-  "language.hint": "При первом запуске MDVibe берёт язык интерфейса Windows; если он недоступен, используется английский.",
+  "language.hint": "При первом запуске MDVibe берёт язык системы; если он недоступен, используется английский.",
   "toast.theme": "Тема: {mode}",
   "shortcuts.theme": "Переключить тему (Системная → Светлая → Тёмная)",
   "time.justNow": "только что",
