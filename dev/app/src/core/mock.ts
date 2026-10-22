@@ -42,6 +42,7 @@ export function createMockBackend(): Backend {
       webviewVersion: null,
       logDir: '',
       systemAccent: params.has('accent'),
+      storeBuild: params.has('store'),
     }),
     loadSettings: async () => settings,
     openNotices: async () => {},

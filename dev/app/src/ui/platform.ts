@@ -13,6 +13,17 @@ export function isMac(): boolean {
   return mac;
 }
 
+let store = false;
+
+/** Mac App Store build: store rules forbid donation links and own update checks. */
+export function setStoreBuild(on: boolean): void {
+  store = on;
+}
+
+export function isStoreBuild(): boolean {
+  return store;
+}
+
 /** Windows shortcuts that are different keys on a Mac. */
 const MAC_KEYS: Record<string, string> = {
   F5: 'Ctrl+R',

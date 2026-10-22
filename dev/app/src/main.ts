@@ -9,7 +9,7 @@ import { App } from './ui/app';
 import { toast } from './ui/toast';
 import { resolveLanguage, setLanguage, t } from './i18n';
 import { normalize } from './core/settings';
-import { setPlatform } from './ui/platform';
+import { setPlatform, setStoreBuild } from './ui/platform';
 
 async function main(): Promise<void> {
   const backend = await createBackend();
@@ -34,6 +34,7 @@ async function main(): Promise<void> {
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   document.documentElement.dataset.platform = info.platform;
   setPlatform(info.platform);
+  setStoreBuild(info.storeBuild);
   if (info.systemAccent) document.documentElement.dataset.accent = 'system';
 
   await new App(backend, info).start();

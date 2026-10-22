@@ -19,7 +19,7 @@ import { recentRow, Sidebar } from './sidebar';
 import { LayoutPanel, openSettings, type SettingsTab } from './settings-ui';
 import { checkForUpdates, meta, openAbout, openShortcuts, releasesApi, wordmark } from './dialogs';
 import { LANGUAGES, resolveLanguage, systemLanguage, t, type StringKey } from '../i18n';
-import { isMac, keys, keysIn } from './platform';
+import { isMac, isStoreBuild, keys, keysIn } from './platform';
 import macIconUrl from '../../../assets/brand/svg/mdvibe-icon-macos.svg?url';
 import type { MenuState } from '../core/backend';
 
@@ -833,10 +833,10 @@ export class App {
     const s = this.settings;
     const m = meta.urls;
     const help: MenuEntry[] = [{ label: t('menu.shortcuts'), shortcut: keys('F1'), action: () => openShortcuts() }];
-    if (releasesApi(m.repository)) help.push({ label: t('menu.checkUpdates'), action: () => void checkForUpdates(this.info.version, (u) => this.openUrl(u)) });
+    if (releasesApi(m.repository) && !isStoreBuild()) help.push({ label: t('menu.checkUpdates'), action: () => void checkForUpdates(this.info.version, (u) => this.openUrl(u)) });
     if (m.repository) help.push({ label: t('menu.repository'), action: () => this.openUrl(m.repository) });
     if (m.issues) help.push({ label: t('menu.reportIssue'), action: () => this.openUrl(m.issues) });
-    if (m.support) help.push({ label: `${t('menu.support')} ♥`, action: () => this.openUrl(m.support) });
+    if (m.support && !isStoreBuild()) help.push({ label: `${t('menu.support')} ♥`, action: () => this.openUrl(m.support) });
     help.push('separator', { label: t('menu.logFolder'), action: () => void this.backend.openLogFolder().catch(() => {}) }, { label: t('menu.about', { product: meta.productName }), action: () => this.about() });
 
     const entries: MenuEntry[] = [

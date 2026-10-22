@@ -27,6 +27,8 @@ pub struct StartupInfo {
     pub log_dir: String,
     /// macOS: the user picked an accent color (else the app's own accent applies).
     pub system_accent: bool,
+    /// Mac App Store build (sandboxed): no donation link, no own update check.
+    pub store_build: bool,
 }
 
 #[tauri::command]
@@ -59,6 +61,10 @@ pub fn startup_info<R: Runtime>(
         system_accent: crate::mac::uses_system_accent(),
         #[cfg(not(target_os = "macos"))]
         system_accent: false,
+        #[cfg(target_os = "macos")]
+        store_build: crate::mac::sandboxed(),
+        #[cfg(not(target_os = "macos"))]
+        store_build: false,
     }
 }
 

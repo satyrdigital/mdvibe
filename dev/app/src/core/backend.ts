@@ -48,6 +48,8 @@ export interface StartupInfo {
   logDir: string;
   /** macOS: the user picked an accent color, controls follow it. */
   systemAccent: boolean;
+  /** Mac App Store build: no donation link and no own update check (store rules). */
+  storeBuild: boolean;
 }
 
 export interface PdfOptions {

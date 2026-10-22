@@ -3,7 +3,7 @@ import { h, icon } from './dom';
 import { ICONS } from './icons';
 import { Modal } from './modal';
 import { t } from '../i18n';
-import { isMac, keys } from './platform';
+import { isMac, isStoreBuild, keys } from './platform';
 import meta from '../../../project.json';
 
 export const SHORTCUTS: { group: string; items: [string, string][] }[] = [
@@ -77,7 +77,7 @@ export function openAbout(version: string, webview: string | null, openUrl: (u: 
   const links: HTMLElement[] = [];
   if (meta.urls.website) links.push(link(t('about.website'), meta.urls.website));
   if (meta.urls.repository) links.push(link(t('about.repository'), meta.urls.repository));
-  if (meta.urls.support) links.push(link(`${t('menu.support')} ♥`, meta.urls.support));
+  if (meta.urls.support && !isStoreBuild()) links.push(link(`${t('menu.support')} ♥`, meta.urls.support));
   if (meta.urls.license) links.push(link(t('about.license'), meta.urls.license));
   for (const s of socialLinks(meta)) links.push(link(s.label, s.url));
   m.body.append(
