@@ -85,3 +85,59 @@ jobs:
             dist/MDVibe-Setup-*.exe
             dist/MDVibe-*-win-*.zip
             dist/SHA256SUMS.txt
+
+  # macOS disk image: universal (Apple Silicon + Intel), ad-hoc signed, not
+  # notarized (no Apple Developer account). Attached to the same draft release.
+  release-macos:
+    runs-on: macos-latest
+    needs: release
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dev/app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: dev/app/src-tauri
+
+      - name: Validate version against tag
+        run: node dev/scripts/sync-metadata.mjs --check --tag "$TAG"
+
+      - name: Install and test
+        working-directory: dev/app
+        run: |
+          npm ci
+          npm run check
+          npm test
+
+      - name: Build (universal, ad-hoc signed)
+        working-directory: dev/app
+        run: npm run app:build -- --target universal-apple-darwin
+
+      - name: Package (disk image, checksums)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/dmgbuild"
+          "$RUNNER_TEMP/dmgbuild/bin/pip" install --quiet "dmgbuild==1.6.5"
+          DMGBUILD_PYTHON="$RUNNER_TEMP/dmgbuild/bin/python" node dev/scripts/package-release.mjs --target universal-apple-darwin
+
+      - name: Attach to the draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          draft: true
+          files: |
+            dist/MDVibe-mac.dmg
+            dist/MDVibe-*-mac-*.dmg
+            dist/SHA256SUMS-mac.txt

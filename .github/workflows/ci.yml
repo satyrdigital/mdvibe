@@ -68,3 +68,59 @@ jobs:
 
       - name: Dependency audit (production, high severity)
         run: npm audit --omit=dev --audit-level=high
+
+  # macOS: the same checks on Apple Silicon, plus the app bundle.
+  macos:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: dev/app
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dev/app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: dev/app/src-tauri
+
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: npm run check
+
+      - name: Unit tests (renderer, sanitizer, settings)
+        run: npm test
+
+      - name: Build UI
+        run: npm run build:web
+
+      - name: Rust format
+        working-directory: dev/app/src-tauri
+        run: cargo fmt --check
+
+      - name: Rust lint
+        working-directory: dev/app/src-tauri
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      - name: Rust tests
+        working-directory: dev/app/src-tauri
+        run: cargo test --locked
+
+      - name: App bundle (ad-hoc signed)
+        run: npm run app:build
+
+      - name: Bundle is signed and declares Markdown documents
+        working-directory: dev/app/src-tauri/target/release/bundle/macos
+        run: |
+          codesign --verify --deep --strict MDVibe.app
+          plutil -extract CFBundleDocumentTypes.0.LSItemContentTypes.0 raw MDVibe.app/Contents/Info.plist | grep -qx net.daringfireball.markdown
