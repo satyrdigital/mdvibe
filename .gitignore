@@ -1,6 +1,7 @@
 # --- Local-only folders (never public) ---
 /promo/
 /temp/
+/_private/
 
 # --- Release artifacts: published via GitHub Releases, never committed ---
 /dist/
