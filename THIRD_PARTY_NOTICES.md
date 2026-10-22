@@ -15,12 +15,12 @@ or installed by Microsoft's bootstrapper under Microsoft's own terms.
 | @fontsource-variable/jetbrains-mono | 5.3.0 | OFL-1.1 | [L1](#l1) |
 | @fontsource-variable/manrope | 5.3.0 | OFL-1.1 | [L2](#l2) |
 | @tauri-apps/api | 2.12.1 | Apache-2.0 OR MIT | [L3](#l3) [L4](#l4) [L5](#l5) |
-| argparse | 3.0.2 | PSF-2.0 | [L6](#l6) |
+| argparse | 3.0.3 | PSF-2.0 | [L6](#l6) |
 | dompurify | 3.4.16 | (MPL-2.0 OR Apache-2.0) | [L7](#l7) [L8](#l8) |
 | entities | 8.1.0 | BSD-2-Clause | [L9](#l9) |
 | highlight.js | 11.12.0 | BSD-3-Clause | [L10](#l10) |
 | linkify-it | 6.1.0 | MIT | [L11](#l11) |
-| markdown-it | 15.0.2 | MIT | [L12](#l12) |
+| markdown-it | 15.0.3 | MIT | [L12](#l12) |
 | markdown-it-footnote | 4.0.0 | MIT | [L13](#l13) |
 | mdurl | 2.1.0 | MIT | [L14](#l14) |
 | punycode.js | 2.3.1 | MIT | [L15](#l15) |
