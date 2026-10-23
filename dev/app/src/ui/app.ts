@@ -1199,6 +1199,11 @@ export class App {
     // macOS: documents from Finder/Dock for this empty window, and menu bar commands.
     await this.backend.on('open-file', (path) => void this.openPath(path));
     await this.backend.on('menu', (id) => this.onMenu(id));
+    // macOS: full screen entered or left by any means (green button, ⌃⌘F, menu).
+    await this.backend.on('fullscreen', (on) => {
+      this.fullscreen = on;
+      this.root.classList.toggle('fullscreen', on);
+    });
     await this.backend.onFileDrop(
       (paths) => void this.onDrop(paths),
       (over) => {
@@ -1229,18 +1234,6 @@ export class App {
       this.syncMenu();
     });
     window.addEventListener('blur', () => document.documentElement.classList.add('window-inactive'));
-    if (isMac()) {
-      // Full screen from the green button or the menu bar: keep the layout in step.
-      let fsTimer = 0;
-      window.addEventListener('resize', () => {
-        window.clearTimeout(fsTimer);
-        fsTimer = window.setTimeout(async () => {
-          const on = await this.backend.isFullscreen().catch(() => this.fullscreen);
-          this.fullscreen = on;
-          this.root.classList.toggle('fullscreen', on);
-        }, 120);
-      });
-    }
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
       if (this.settings.appearance.theme === 'system') document.documentElement.dataset.theme = this.resolvedTheme();
     });

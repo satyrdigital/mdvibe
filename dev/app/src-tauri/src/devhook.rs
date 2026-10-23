@@ -73,6 +73,7 @@ fn handle<R: Runtime>(app: &AppHandle<R>, dir: &Path, name: &str, body: &str) {
             "info" => info(app, &dir),
             "snap" => snap(app, &dir),
             "awake" => awake(app),
+            "shotall" => shot_all(&dir),
             "pdf" => pdf(app, &dir, &body),
             "menu" => {
                 crate::mac::on_menu_event(app, &body);
@@ -187,6 +188,53 @@ fn awake<R: Runtime>(app: &AppHandle<R>) -> String {
     format!("{n} window(s)")
 }
 
+/// Every window of the app, AppKit's own included (such as the full-screen
+/// toolbar window) → `ns-<n>.png`, with a line per window in the reply.
+fn shot_all(dir: &Path) -> String {
+    let Some(mtm) = MainThreadMarker::new() else {
+        return "not on main thread".into();
+    };
+    let mut out = Vec::new();
+    for (i, nw) in objc2_app_kit::NSApplication::sharedApplication(mtm)
+        .windows()
+        .iter()
+        .enumerate()
+    {
+        let class = nw.class().name().to_string_lossy().into_owned();
+        let f = nw.frame();
+        out.push(format!(
+            "{i} {class} visible={} alpha={:.2} occlusion={:?} level={} frame=({:.0},{:.0} {:.0}x{:.0})",
+            nw.isVisible(),
+            nw.alphaValue(),
+            nw.occlusionState(),
+            nw.level(),
+            f.origin.x,
+            f.origin.y,
+            f.size.width,
+            f.size.height
+        ));
+        #[allow(deprecated)]
+        let image = CGWindowListCreateImage(
+            CGRect::new(
+                CGPoint::new(f64::INFINITY, f64::INFINITY),
+                CGSize::new(0.0, 0.0),
+            ),
+            CGWindowListOption::OptionIncludingWindow,
+            nw.windowNumber() as u32,
+            CGWindowImageOption::BoundsIgnoreFraming | CGWindowImageOption::BestResolution,
+        );
+        let Some(image) = image else { continue };
+        let rep = NSBitmapImageRep::initWithCGImage(NSBitmapImageRep::alloc(), &image);
+        let data = unsafe {
+            rep.representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new())
+        };
+        if let Some(d) = data {
+            let _ = std::fs::write(dir.join(format!("ns-{i}.png")), d.to_vec());
+        }
+    }
+    out.join("\n")
+}
+
 fn snap<R: Runtime>(app: &AppHandle<R>, dir: &Path) -> String {
     let mut n = 0;
     for (label, w) in app.webview_windows() {
@@ -247,6 +295,7 @@ fn info<R: Runtime>(app: &AppHandle<R>, dir: &Path) -> String {
             "focused": w.is_focused().unwrap_or(false),
             "visible": w.is_visible().unwrap_or(false),
             "fullscreen": w.is_fullscreen().unwrap_or(false),
+            "toolbar_visible": ns_window(&w).and_then(|nw| nw.toolbar()).map(|t| t.isVisible()),
             "position": w.outer_position().ok().map(|p| [p.x, p.y]),
             "size": w.inner_size().ok().map(|s| [s.width, s.height]),
             "scale": w.scale_factor().unwrap_or(1.0),

@@ -18,7 +18,7 @@ use objc2_app_kit::{
     NSAppearanceNameAqua, NSAppearanceNameDarkAqua, NSApplication, NSDocumentController,
     NSPaperOrientation, NSPrintHeaderAndFooter, NSPrintInfo, NSPrintJobSavingURL, NSPrintOperation,
     NSPrintSaveJob, NSPrintingPaginationMode, NSTitlebarSeparatorStyle, NSToolbar, NSWindow,
-    NSWindowToolbarStyle,
+    NSWindowStyleMask, NSWindowToolbarStyle,
 };
 use objc2_foundation::{ns_string, MainThreadMarker, NSArray, NSNumber, NSSize, NSString, NSURL};
 use objc2_web_kit::WKWebView;
@@ -58,6 +58,63 @@ pub fn attach_toolbar<R: Runtime>(window: &WebviewWindow<R>) {
         ns_window.setToolbarStyle(NSWindowToolbarStyle::Unified);
         ns_window.setTitlebarSeparatorStyle(NSTitlebarSeparatorStyle::None);
     });
+}
+
+/// Keeps a window in step with full screen, which AppKit enters and leaves with
+/// an animation (the green button, ⌃⌘F, the renderer's own toggle):
+/// * in full screen AppKit shows a window's toolbar as an opaque band above the
+///   content, covering the renderer's toolbar — the empty toolbar is hidden
+///   there and shown again outside;
+/// * the renderer is told (`fullscreen` event), so it drops the room it keeps
+///   for the window controls only while they are really gone.
+///
+/// Called on every resize (from the event loop, so the work happens on a
+/// helper thread); checks again once the animation has surely ended.
+pub fn sync_fullscreen<R: Runtime>(window: &WebviewWindow<R>) {
+    static PENDING: Mutex<Vec<String>> = Mutex::new(Vec::new());
+    let label = window.label().to_owned();
+    {
+        let Ok(mut pending) = PENDING.lock() else {
+            return;
+        };
+        if pending.contains(&label) {
+            return;
+        }
+        pending.push(label.clone());
+    }
+    let w = window.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(150));
+        apply_fullscreen(&w);
+        std::thread::sleep(std::time::Duration::from_millis(700));
+        if let Ok(mut pending) = PENDING.lock() {
+            pending.retain(|l| *l != label);
+        }
+        apply_fullscreen(&w);
+    });
+}
+
+/// Runs on a helper thread: AppKit work on the main thread, then the event.
+fn apply_fullscreen<R: Runtime>(window: &WebviewWindow<R>) {
+    let (tx, rx) = std::sync::mpsc::channel();
+    let queued = window.with_webview(move |wv| {
+        let ns_window: &NSWindow = unsafe { &*wv.ns_window().cast() };
+        let full = ns_window
+            .styleMask()
+            .contains(NSWindowStyleMask::FullScreen);
+        if let Some(toolbar) = ns_window.toolbar() {
+            if toolbar.isVisible() == full {
+                toolbar.setVisible(!full);
+            }
+        }
+        let _ = tx.send(full);
+    });
+    if queued.is_err() {
+        return;
+    }
+    if let Ok(full) = rx.recv_timeout(std::time::Duration::from_secs(2)) {
+        let _ = window.emit_to(window.label(), "fullscreen", full);
+    }
 }
 
 /// The application runs in the App Store sandbox (not the DMG build).

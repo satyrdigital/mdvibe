@@ -451,6 +451,13 @@ pub fn run() {
                     window_state::save(&ww, &state.window_store);
                 }
             }
+            // Entering or leaving full screen arrives as resizes.
+            #[cfg(target_os = "macos")]
+            WindowEvent::Resized(_) => {
+                if let Some(ww) = window.app_handle().get_webview_window(window.label()) {
+                    mac::sync_fullscreen(&ww);
+                }
+            }
             WindowEvent::Focused(true) => {
                 if let Some(state) = window.app_handle().try_state::<AppState>() {
                     if let Ok(mut g) = state.last_focused.lock() {

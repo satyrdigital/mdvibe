@@ -100,6 +100,7 @@ export interface Backend {
   on(event: 'doc-changed', cb: (p: { exists: boolean }) => void): Promise<void>;
   on(event: 'settings-changed' | 'recent-changed', cb: () => void): Promise<void>;
   on(event: 'open-file' | 'menu', cb: (p: string) => void): Promise<void>;
+  on(event: 'fullscreen', cb: (on: boolean) => void): Promise<void>;
   onFileDrop(cb: (paths: string[]) => void, hover: (over: boolean) => void): Promise<void>;
   setFullscreen(on: boolean): Promise<void>;
   isFullscreen(): Promise<boolean>;
