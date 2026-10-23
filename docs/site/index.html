@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MDVibe — a calm Markdown viewer for Windows</title>
-  <meta name="description" content="MDVibe is a free, lightweight Markdown viewer for Windows: open .md files as clean, readable documents with syntax highlighting, outline, themes, print and PDF. No ads, no tracking.">
+  <title>MDVibe — a calm Markdown viewer for Windows and Mac</title>
+  <meta name="description" content="MDVibe is a free, lightweight Markdown viewer for Windows and Mac: open .md files as clean, readable documents with syntax highlighting, outline, themes, print and PDF. No ads, no tracking.">
   <link rel="canonical" href="https://satyrdigital.github.io/mdvibe/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="MDVibe — Markdown, made calm.">
-  <meta property="og:description" content="A free, lightweight Markdown viewer for Windows. No ads. No tracking.">
+  <meta property="og:description" content="A free, lightweight Markdown viewer for Windows and Mac. No ads. No tracking.">
   <meta property="og:url" content="https://satyrdigital.github.io/mdvibe/">
   <meta property="og:image" content="https://satyrdigital.github.io/mdvibe/assets/social-preview-1280x640.png">
   <meta property="og:image:width" content="1280">
@@ -50,14 +50,18 @@
           <img class="hero-icon" src="assets/mdvibe-icon.svg" width="72" height="72" alt="">
           <h1>MDVibe</h1>
           <p class="tagline" data-i18n="hero.tagline">Markdown, made calm.</p>
-          <p class="lead" data-i18n="hero.lead">A lightweight Markdown viewer for Windows. Open .md files as clean, readable documents — with syntax highlighting, an outline, themes, print and PDF.</p>
+          <p class="lead" data-i18n="hero.lead">A lightweight Markdown viewer for Windows and Mac. Open .md files as clean, readable documents — with syntax highlighting, an outline, themes, print and PDF.</p>
           <div class="cta">
             <a class="btn primary big" id="download" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-Setup.exe">
               <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M10 3v10m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <span data-i18n="hero.download">Download for Windows</span>
             </a>
+            <a class="btn big" id="download-mac" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-mac.dmg">
+              <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M10 3v10m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i18n="hero.downloadMac">Download for Mac</span>
+            </a>
           </div>
-          <p class="meta" data-i18n="hero.meta">Free · Windows 10 and 11 · No ads · No tracking</p>
+          <p class="meta" data-i18n="hero.meta">Free · Windows 10 and 11 · macOS 11 or later · No ads · No tracking</p>
           <p class="meta"><a href="https://github.com/satyrdigital/mdvibe" data-i18n="hero.source">Source code on GitHub</a></p>
         </div>
         <figure class="shot">
@@ -91,7 +95,7 @@
           <article>
             <span class="ico" aria-hidden="true">◐</span>
             <h3 data-i18n="f4.title">Light and dark</h3>
-            <p data-i18n="f4.text">One click switches the theme. It can also follow Windows automatically.</p>
+            <p data-i18n="f4.text">One click switches the theme. It can also follow your system automatically.</p>
           </article>
           <article>
             <span class="ico" aria-hidden="true">Aa</span>
@@ -126,7 +130,7 @@
                  alt="A Markdown document in the dark theme" data-i18n-alt="shot.dark.alt">
           </figure>
         </div>
-        <p class="caption" data-i18n="screens.caption">Light or dark — one click in the toolbar, or follow Windows.</p>
+        <p class="caption" data-i18n="screens.caption">Light or dark — one click in the toolbar, or follow your system.</p>
       </div>
     </section>
 
@@ -168,7 +172,7 @@
     <section id="install" class="alt">
       <div class="wrap two">
         <div>
-          <h2 data-i18n="install.title">Install in a minute</h2>
+          <h2 data-i18n="install.title">Install on Windows</h2>
           <ol class="steps">
             <li data-i18n="install.1">Download MDVibe.</li>
             <li data-i18n="install.2">Run MDVibe-Setup.exe. No administrator rights are needed.</li>
@@ -185,7 +189,28 @@
             <li data-i18n="openwith.3">Tick “Always use this app to open .md files” and press OK.</li>
           </ol>
           <p class="note" data-i18n="openwith.note">The installer never changes your default app on its own — you decide.</p>
-          <p class="soon" data-i18n="platforms">macOS and Linux versions are planned.</p>
+        </div>
+      </div>
+      <div class="wrap two mac-install" id="install-mac">
+        <div>
+          <h2 data-i18n="mac.title">Install on Mac</h2>
+          <ol class="steps">
+            <li data-i18n="mac.1">Download MDVibe-mac.dmg (Apple Silicon and Intel, macOS 11 or later).</li>
+            <li data-i18n="mac.2">Open it and drag MDVibe to Applications.</li>
+            <li data-i18n="mac.3">Open any .md file with MDVibe: select it in Finder → File → Get Info → Open with: MDVibe → Change All.</li>
+          </ol>
+          <p class="note" data-i18n="mac.note">MDVibe never makes itself the default app on its own — you decide.</p>
+        </div>
+        <div>
+          <h2 data-i18n="macfirst.title">First launch on Mac</h2>
+          <p data-i18n="macfirst.lead">MDVibe is not notarized by Apple yet, so macOS stops the first launch with “Apple could not verify MDVibe…”. If you downloaded it from this page:</p>
+          <ol class="steps">
+            <li data-i18n="macfirst.1">Press “Done” in that message.</li>
+            <li data-i18n="macfirst.2">Open System Settings → Privacy &amp; Security and scroll down to Security.</li>
+            <li data-i18n="macfirst.3">Next to “MDVibe was blocked to protect your Mac” press “Open Anyway”, then confirm with your password.</li>
+          </ol>
+          <p class="note" data-i18n="macfirst.note">This is needed only once. Terminal alternative, before the first launch: xattr -dr com.apple.quarantine /Applications/MDVibe.app</p>
+          <p class="soon" data-i18n="platforms">Linux is planned.</p>
         </div>
       </div>
     </section>
@@ -199,7 +224,7 @@
           <a class="btn" href="https://github.com/satyrdigital/mdvibe" data-i18n="source.github">View on GitHub</a>
           <a class="btn" href="https://github.com/satyrdigital/mdvibe/issues" data-i18n="source.issue">Report an issue</a>
         </p>
-        <p class="final-cta"><a class="btn primary" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-Setup.exe" data-i18n="hero.download">Download for Windows</a></p>
+        <p class="final-cta"><a class="btn primary" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-Setup.exe" data-i18n="hero.download">Download for Windows</a> <a class="btn" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-mac.dmg" data-i18n="hero.downloadMac">Download for Mac</a></p>
       </div>
     </section>
 

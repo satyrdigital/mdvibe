@@ -1,7 +1,7 @@
 {
   "$comment": "Canonical project metadata. Single source of truth: run `npm run sync-metadata` in dev/app after editing. Empty URL = feature hidden in the app.",
   "productName": "MDVibe",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "digital.satyr.mdvibe",
   "executableName": "MDVibe",
   "tagline": "Markdown, made calm.",

@@ -84,16 +84,26 @@ Requires macOS 11 Big Sur or later, on Apple Silicon or Intel.
 1. Open `MDVibe-mac.dmg` and drag **MDVibe** to **Applications**.
 2. Open MDVibe from Applications.
 
-MDVibe is not notarized by Apple yet (that needs a paid Apple Developer account), so the
-first launch shows *"MDVibe" Not Opened — Apple could not verify…*. If you downloaded the
-disk image from this repository:
+MDVibe is not notarized by Apple yet (that needs a paid Apple Developer account), so on the
+first launch macOS says *"MDVibe" Not Opened — Apple could not verify "MDVibe" is free of
+malware…*. If you downloaded the disk image from this repository:
 
-1. Press **Done** in that message.
-2. Open **System Settings → Privacy & Security**, scroll down to **Security**.
-3. Next to *"MDVibe" was blocked…* press **Open Anyway**, confirm with your password, then **Open**.
+1. Press **Done** in that message (not *Move to Trash*).
+2. Open **System Settings → Privacy & Security** and scroll down to **Security**.
+3. Next to *"MDVibe" was blocked to protect your Mac* press **Open Anyway**.
+4. Confirm with **Open Anyway** and your password or Touch ID.
 
-This is needed once. Alternatively, in Terminal:
-`xattr -dr com.apple.quarantine /Applications/MDVibe.app`
+This is needed only once; after that MDVibe opens like any other app.
+
+Prefer Terminal? Run this **before** the first launch:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/MDVibe.app
+```
+
+If Terminal answers *Operation not permitted*, macOS has already checked the app: use
+**Open Anyway** above, or allow Terminal in **System Settings → Privacy & Security →
+App Management** and run the command again.
 
 To open `.md` files with MDVibe by double-click: select a `.md` file in Finder →
 **File → Get Info** → **Open with: MDVibe** → **Change All…**. MDVibe never makes itself

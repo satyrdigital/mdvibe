@@ -93,7 +93,7 @@ section.alt { background: var(--surface); border-top: 1px solid var(--line); bor
 .hero h1 { font-size: clamp(44px, 7vw, 64px); font-weight: 800; letter-spacing: -0.035em; margin: 0; }
 .tagline { font-size: clamp(22px, 3vw, 28px); font-weight: 700; margin: 4px 0 14px; color: var(--primary-strong); }
 .lead { font-size: 19px; color: var(--muted); margin: 0 0 26px; max-width: 32em; }
-.cta { margin-bottom: 14px; }
+.cta { margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 12px; }
 .meta { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
 
 /* Screenshots */
@@ -129,7 +129,8 @@ section.alt { background: var(--surface); border-top: 1px solid var(--line); bor
 .note { color: var(--muted); font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 0; }
 .soon { color: var(--muted); font-size: 15px; margin: 18px 0 0; }
 .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 22px 0 0; }
-.final-cta { margin: 28px 0 0; }
+.final-cta { margin: 28px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.mac-install { margin-top: 56px; padding-top: 48px; border-top: 1px solid var(--line); }
 .tip { min-width: 210px; justify-content: center; }
 .tip-ico { font-size: 18px; line-height: 1; }
 .tip.kofi { background: #ff5e5b; border-color: #ff5e5b; color: #fff; }

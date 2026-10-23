@@ -6,26 +6,35 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-22
+
+MDVibe for Mac.
+
 ### Added
 
-- macOS app (macOS 11 or later, Apple Silicon and Intel), distributed as a disk image:
-  - one app with a window per document; documents open from Finder, the Dock and
+- macOS app (macOS 11 or later, Apple Silicon and Intel), distributed as a disk image
+  (`MDVibe-mac.dmg`). Not notarized yet: the first launch needs **Open Anyway**
+  (see the README).
+  - One app with a window per document. Documents open from Finder, the Dock and
     "Open With"; an already open document comes to the front; the app keeps running
-    after its last window closes;
-  - native menu bar in the interface language, ⌘ shortcuts shown throughout;
+    after its last window closes. MDVibe never makes itself the default app.
+  - Native menu bar in the interface language; ⌘ shortcuts shown throughout.
   - Mac look: the toolbar is the title bar, controls and the sidebar float on glass over
-    the document, system font, the user's accent color, Dark Mode;
-  - Print and Save as PDF with the page setup from the reading settings;
-  - documents appear in the system's recent items (Dock, Apple menu);
-  - prepared for the Mac App Store sandbox: a one-time bar allows the document's folder
+    the document, system font, the user's accent color, Dark Mode, full screen.
+  - Print and Save as PDF with the page setup from the reading settings.
+  - Documents appear in the system's recent items (Dock, Apple menu).
+  - Prepared for the Mac App Store sandbox: a one-time bar allows the document's folder
     to show its images, Recent keeps working.
+- Tips: Help → Support the Project opens the Support section of the project page
+  (Ko-fi and Buy Me a Coffee); Sponsor button on GitHub.
 - Third-party notices cover the macOS app.
 
 ### Changed
 
-- Tauri 2.12.5.
+- The language hint in Settings speaks of the system language (not only Windows).
+- Tauri 2.12.5 (Rust 1.90 or later), markdown-it 15.0.3, Vite 8.3.5 and other dependency updates.
 
-## [0.1.0] - unreleased
+## [0.1.0] - 2026-10-01
 
 First public preview.
 
