@@ -62,6 +62,12 @@
       'source.text': 'Вихідний код MDVibe відкритий (source-available) за ліцензією MIT із Commons Clause: можна безкоштовно використовувати — зокрема на роботі, — вивчати, змінювати й поширювати. Продавати сам MDVibe не можна.',
       'source.github': 'Переглянути на GitHub',
       'source.issue': 'Повідомити про проблему',
+      'nav.support': 'Підтримати',
+      'support.title': 'Підтримати проєкт',
+      'support.text': 'MDVibe безкоштовний, без реклами й без стеження. Якщо він заощаджує вам час, невеликий донат допоможе його розвивати.',
+      'support.kofi': 'Підтримати на Ko-fi',
+      'support.bmc': 'Buy Me a Coffee',
+      'support.note': 'Платежі обробляє Soul Motors LLC.',
       'footer.by': 'Автор — Andrii Shumak',
       'footer.license': 'Ліцензія'
     },
@@ -121,6 +127,12 @@
       'source.text': 'Исходный код MDVibe открыт (source-available) по лицензии MIT с Commons Clause: можно бесплатно использовать — в том числе на работе, — изучать, изменять и распространять. Продавать сам MDVibe нельзя.',
       'source.github': 'Смотреть на GitHub',
       'source.issue': 'Сообщить о проблеме',
+      'nav.support': 'Поддержать',
+      'support.title': 'Поддержать проект',
+      'support.text': 'MDVibe бесплатный, без рекламы и без слежки. Если он экономит вам время, небольшой донат поможет его развивать.',
+      'support.kofi': 'Поддержать на Ko-fi',
+      'support.bmc': 'Buy Me a Coffee',
+      'support.note': 'Платежи обрабатывает Soul Motors LLC.',
       'footer.by': 'Автор — Andrii Shumak',
       'footer.license': 'Лицензия'
     }

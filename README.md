@@ -118,6 +118,15 @@ never run.
 
 Found a security problem? Please see [SECURITY.md](SECURITY.md).
 
+## Support
+
+MDVibe is free. If it saves you time, you can leave a tip:
+
+<a href="https://ko-fi.com/shumak"><img alt="Tip on Ko-fi" src="https://img.shields.io/badge/Ko--fi-Tip-FF5E5B?logo=kofi&logoColor=white"></a>
+<a href="https://buymeacoffee.com/shumak"><img alt="Buy Me a Coffee" src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Tip-FFDD00?logo=buymeacoffee&logoColor=black"></a>
+
+Payments are processed by Soul Motors LLC.
+
 ## License
 
 MDVibe is **source-available** under the [MIT License with the Commons Clause](LICENSE):
