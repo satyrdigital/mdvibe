@@ -38,7 +38,7 @@ windows-core = "0.62"
 objc2 = "0.6"
 block2 = "0.6"
 objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSArray", "NSData", "NSDictionary", "NSError", "NSGeometry", "NSString", "NSURL", "NSUserDefaults", "NSValue"] }
-objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSAppearance", "NSApplication", "NSBitmapImageRep", "NSButton", "NSControl", "NSDocumentController", "NSImage", "NSImageRep", "NSPrintInfo", "NSPrintOperation", "NSResponder", "NSToolbar", "NSView", "NSWindow", "objc2-core-graphics"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSAppearance", "NSApplication", "NSBitmapImageRep", "NSButton", "NSControl", "NSDocumentController", "NSImage", "NSImageRep", "NSMenu", "NSMenuItem", "NSPrintInfo", "NSPrintOperation", "NSResponder", "NSToolbar", "NSView", "NSWindow", "objc2-core-graphics"] }
 objc2-core-graphics = { version = "0.3", default-features = false, features = ["std", "CGImage", "CGWindow"] }
 objc2-core-foundation = { version = "0.3", default-features = false, features = ["std", "CFCGTypes"] }
 objc2-web-kit = { version = "0.3", default-features = false, features = ["std", "WKPreferences", "WKSnapshotConfiguration", "WKWebView", "WKWebViewConfiguration", "block2", "objc2-app-kit"] }

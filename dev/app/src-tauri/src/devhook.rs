@@ -6,7 +6,7 @@
 //!             unlocked screen: occluded windows are not drawn)
 //!   snap      the page of every window as WebKit renders it → `<label>-web.png`
 //!             (works while the screen is locked)
-//!   info      windows, focus, documents, window-control frames → `info.json`
+//!   info      windows, focus, documents, window-control frames, the menu bar → `info.json`
 //!   eval      JavaScript run in the focused window (or `eval.<label>`)
 //!   menu      a menu bar command id, as if chosen from the menu bar
 //!   open      a path, as if handed over by Finder
@@ -235,6 +235,33 @@ fn shot_all(dir: &Path) -> String {
     out.join("\n")
 }
 
+/// Menu bar titles: `[[menu, [items…]], …]`.
+fn menu_titles() -> Value {
+    let Some(mtm) = MainThreadMarker::new() else {
+        return Value::Null;
+    };
+    let Some(bar) = objc2_app_kit::NSApplication::sharedApplication(mtm).mainMenu() else {
+        return Value::Null;
+    };
+    let menus: Vec<Value> = bar
+        .itemArray()
+        .iter()
+        .map(|top| {
+            let items: Vec<String> = top
+                .submenu()
+                .map(|m| {
+                    m.itemArray()
+                        .iter()
+                        .map(|i| i.title().to_string())
+                        .collect()
+                })
+                .unwrap_or_default();
+            json!([top.title().to_string(), items])
+        })
+        .collect();
+    Value::Array(menus)
+}
+
 fn snap<R: Runtime>(app: &AppHandle<R>, dir: &Path) -> String {
     let mut n = 0;
     for (label, w) in app.webview_windows() {
@@ -312,7 +339,7 @@ fn info<R: Runtime>(app: &AppHandle<R>, dir: &Path) -> String {
             json!({ "name": m.name(), "scale": m.scale_factor(), "work_area": [wa.position.x, wa.position.y, wa.size.width, wa.size.height] })
         })
         .collect();
-    let v: Value = json!({ "pid": std::process::id(), "monitors": monitors, "windows": windows });
+    let v: Value = json!({ "pid": std::process::id(), "monitors": monitors, "windows": windows, "menu": menu_titles() });
     let _ = std::fs::write(
         dir.join("info.json"),
         serde_json::to_string_pretty(&v).unwrap_or_default(),
