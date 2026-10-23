@@ -130,6 +130,12 @@ section.alt { background: var(--surface); border-top: 1px solid var(--line); bor
 .soon { color: var(--muted); font-size: 15px; margin: 18px 0 0; }
 .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 22px 0 0; }
 .final-cta { margin: 28px 0 0; }
+.tip { min-width: 210px; justify-content: center; }
+.tip-ico { font-size: 18px; line-height: 1; }
+.tip.kofi { background: #ff5e5b; border-color: #ff5e5b; color: #fff; }
+.tip.kofi:hover { background: #e94d4a; border-color: #e94d4a; }
+.tip.bmc { background: #ffdd00; border-color: #ffdd00; color: #1b1e2b; }
+.tip.bmc:hover { background: #f2d000; border-color: #f2d000; }
 
 /* Footer */
 footer { background: #1b1e2b; color: #a0a6c0; padding: 28px 0; font-size: 14px; }
