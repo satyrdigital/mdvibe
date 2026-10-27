@@ -18,8 +18,8 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon.ico" sizes="any">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon-180.png">
-  <link rel="stylesheet" href="style.css">
-  <script src="i18n.js" defer></script>
+  <link rel="stylesheet" href="style.css?v=3">
+  <script src="i18n.js?v=3" defer></script>
 </head>
 <body>
   <header class="top">
@@ -52,19 +52,16 @@
           <p class="tagline" data-i18n="hero.tagline">Markdown, made calm.</p>
           <p class="lead" data-i18n="hero.lead">A lightweight Markdown viewer for Windows and Mac. Open .md files as clean, readable documents — with syntax highlighting, an outline, themes, print and PDF.</p>
           <div class="cta">
-            <a class="btn primary big" id="download" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-Setup.exe">
-              <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M10 3v10m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span data-i18n="hero.download">Download for Windows</span>
+            <a class="btn primary dl" id="download" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-Setup.exe">
+              <svg viewBox="0 0 20 20" width="22" height="22" aria-hidden="true"><path d="M10 3v10m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="dl-text"><small data-i18n="hero.downloadFor">Download for</small><strong>Windows</strong></span>
             </a>
-            <a class="btn big" id="download-mac" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-mac.dmg">
-              <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M10 3v10m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span data-i18n="hero.downloadMac">Download for Mac</span>
+            <a class="btn primary dl" id="download-mac" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-mac.dmg">
+              <svg viewBox="0 0 20 20" width="22" height="22" aria-hidden="true"><path d="M10 3v10m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="dl-text"><small data-i18n="hero.downloadFor">Download for</small><strong>Mac</strong></span>
             </a>
-            <span class="btn big btn-soon" aria-disabled="true">
-              <span data-i18n="hero.linux">Linux</span>
-              <small data-i18n="hero.soon">Coming soon</small>
-            </span>
           </div>
+          <p class="next-platforms"><span data-i18n="hero.soon">Coming soon</span> <span class="chip">Linux</span> <span class="chip">iOS</span> <span class="chip">Android</span></p>
           <p class="meta" data-i18n="hero.meta">Free · Windows 10 and 11 · macOS 11 or later · No ads · No tracking</p>
           <p class="meta"><a href="https://github.com/satyrdigital/mdvibe" data-i18n="hero.source">Source code on GitHub</a></p>
         </div>
@@ -214,7 +211,7 @@
             <li data-i18n="macfirst.3">Next to “MDVibe was blocked to protect your Mac” press “Open Anyway”, then confirm with your password.</li>
           </ol>
           <p class="note" data-i18n="macfirst.note">This is needed only once. Terminal alternative, before the first launch: xattr -dr com.apple.quarantine /Applications/MDVibe.app</p>
-          <p class="soon" data-i18n="platforms">Linux is planned.</p>
+          <p class="soon" data-i18n="platforms">Linux, iOS and Android versions are planned.</p>
         </div>
       </div>
     </section>
@@ -228,7 +225,7 @@
           <a class="btn" href="https://github.com/satyrdigital/mdvibe" data-i18n="source.github">View on GitHub</a>
           <a class="btn" href="https://github.com/satyrdigital/mdvibe/issues" data-i18n="source.issue">Report an issue</a>
         </p>
-        <p class="final-cta"><a class="btn primary" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-Setup.exe" data-i18n="hero.download">Download for Windows</a> <a class="btn" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-mac.dmg" data-i18n="hero.downloadMac">Download for Mac</a> <span class="btn btn-soon" aria-disabled="true"><span data-i18n="hero.linux">Linux</span> <small data-i18n="hero.soon">Coming soon</small></span></p>
+        <p class="final-cta"><a class="btn primary big" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-Setup.exe" data-i18n="hero.download">Download for Windows</a> <a class="btn primary big" href="https://github.com/satyrdigital/mdvibe/releases/latest/download/MDVibe-mac.dmg" data-i18n="hero.downloadMac">Download for Mac</a></p>
       </div>
     </section>
 

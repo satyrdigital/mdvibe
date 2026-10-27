@@ -85,10 +85,15 @@ section.alt { background: var(--surface); border-top: 1px solid var(--line); bor
 .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
 .btn.primary:hover { background: var(--primary-strong); border-color: var(--primary-strong); }
 .btn.big { padding: 15px 26px; font-size: 18px; border-radius: 10px; }
-/* Platform that is not out yet: looks like a button, does nothing. */
-.btn-soon { border-style: dashed; background: transparent; color: var(--muted); cursor: default; }
-.btn-soon:hover { border-color: var(--line); }
-.btn-soon small { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 99px; background: var(--line); }
+/* Download buttons: Windows and Mac side by side, equal. */
+.btn.dl { justify-content: center; gap: 12px; padding: 13px 20px; border-radius: 12px; }
+.dl-text { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+.dl-text small { font-size: 13px; font-weight: 600; opacity: 0.85; }
+.dl-text strong { font-size: 20px; font-weight: 800; }
+/* Platforms that are not out yet: a quiet line, nothing to click. */
+.next-platforms { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px; color: var(--muted); font-size: 14px; font-weight: 700; }
+.next-platforms > span:first-child { margin-right: 4px; }
+.chip { padding: 3px 11px; border: 1.5px dashed var(--line); border-radius: 99px; color: var(--muted); }
 
 /* Hero */
 .hero { padding: 56px 0 72px; }
@@ -97,7 +102,7 @@ section.alt { background: var(--surface); border-top: 1px solid var(--line); bor
 .hero h1 { font-size: clamp(44px, 7vw, 64px); font-weight: 800; letter-spacing: -0.035em; margin: 0; }
 .tagline { font-size: clamp(22px, 3vw, 28px); font-weight: 700; margin: 4px 0 14px; color: var(--primary-strong); }
 .lead { font-size: 19px; color: var(--muted); margin: 0 0 26px; max-width: 32em; }
-.cta { margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 12px; }
+.cta { margin-bottom: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 480px; }
 .meta { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
 
 /* Screenshots */
@@ -155,6 +160,7 @@ footer a { color: #eef0fa; }
   .nav { display: none; }
   .lang { margin-left: auto; }
   .btn.big { width: 100%; justify-content: center; }
+  .cta { max-width: none; }
   section { padding: 48px 0; }
 }
 
