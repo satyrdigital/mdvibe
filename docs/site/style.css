@@ -85,6 +85,10 @@ section.alt { background: var(--surface); border-top: 1px solid var(--line); bor
 .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
 .btn.primary:hover { background: var(--primary-strong); border-color: var(--primary-strong); }
 .btn.big { padding: 15px 26px; font-size: 18px; border-radius: 10px; }
+/* Platform that is not out yet: looks like a button, does nothing. */
+.btn-soon { border-style: dashed; background: transparent; color: var(--muted); cursor: default; }
+.btn-soon:hover { border-color: var(--line); }
+.btn-soon small { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 99px; background: var(--line); }
 
 /* Hero */
 .hero { padding: 56px 0 72px; }
