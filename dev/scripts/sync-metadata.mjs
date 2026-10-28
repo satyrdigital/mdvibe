@@ -5,12 +5,17 @@
 //   dev/app/src-tauri/tauri.conf.json productName, identifier, publisher, copyright, homepage, descriptions
 // The UI (About, links) and the installer read the values from these at build time.
 //
+// It also guards what must not drift between releases:
+//   README.md and docs/site link only to releases/latest/download/… (never a pinned version);
+//   with --tag, CHANGELOG.md has a dated, non-empty section for that version.
+//
 // Usage:  node dev/scripts/sync-metadata.mjs           write
 //         node dev/scripts/sync-metadata.mjs --check   fail if anything is out of sync (CI)
 //         node dev/scripts/sync-metadata.mjs --tag v1.2.3   additionally verify a release tag
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { changelogSection } from './release-notes.mjs';
 
 const dev = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const meta = JSON.parse(fs.readFileSync(path.join(dev, 'project.json'), 'utf8'));
@@ -60,6 +65,22 @@ update('app/src-tauri/Cargo.toml', (text) =>
     .replace(/^version = ".*"$/m, `version = "${meta.version}"`)
     .replace(/^authors = \[.*\]$/m, `authors = ["${meta.author}"]`),
 );
+
+// Pages and README must keep working after every release without edits.
+const pinned = /releases\/download\/v\d|releases\/tag\/v\d/;
+const pages = ['README.md', ...fs.readdirSync(path.join(dev, '..', 'docs', 'site')).filter((f) => /\.(html|js)$/.test(f)).map((f) => `docs/site/${f}`)];
+for (const file of pages) {
+  const lines = fs.readFileSync(path.join(dev, '..', file), 'utf8').split('\n');
+  lines.forEach((line, i) => {
+    if (pinned.test(line)) problems.push(`${file}:${i + 1} links to a fixed version; use releases/latest/download/…`);
+  });
+}
+
+if (tag) {
+  const section = changelogSection(meta.version);
+  if (!section) problems.push(`CHANGELOG.md has no "## [${meta.version}] - YYYY-MM-DD" section`);
+  else if (!section.body.trim()) problems.push(`CHANGELOG.md section ${meta.version} is empty`);
+}
 
 if (problems.length) {
   for (const p of problems) console.error(`✗ ${p}`);

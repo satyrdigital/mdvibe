@@ -1,5 +1,6 @@
 # Builds release artifacts and creates a DRAFT GitHub Release.
-# Releases are published manually from the draft.
+# Releases are published manually from the draft; publishing starts
+# published.yml (checks the files, deploys the project page, checks the page).
 name: Release
 
 on:
@@ -73,13 +74,17 @@ jobs:
       - name: Package (installer, portable zip, checksums)
         run: node dev/scripts/package-release.mjs
 
+      # Notes = the version's CHANGELOG section + download and first-launch blocks.
+      - name: Release notes
+        run: node dev/scripts/release-notes.mjs $env:TAG --out dist/RELEASE-NOTES.md
+
       - name: Create draft release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
           name: MDVibe ${{ env.TAG }}
           draft: true
-          generate_release_notes: true
+          body_path: dist/RELEASE-NOTES.md
           files: |
             dist/MDVibe-Setup.exe
             dist/MDVibe-Setup-*.exe

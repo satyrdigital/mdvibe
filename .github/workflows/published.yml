@@ -1,0 +1,67 @@
+# After the owner presses Publish on a release: everything a visitor would
+# notice is checked and the project page goes live, with no manual steps.
+#   1. verify  — the release is the latest, all files are attached, checksums
+#                match, the Windows exe and the Mac app carry the version.
+#   2. pages   — deploys the project page from main.
+#   3. site    — the live page's download links lead to this release and the
+#                README badge shows it.
+# A failed run is e-mailed to whoever published the release.
+name: Published
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Published release tag to check (e.g. v0.2.0)'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: published
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+
+jobs:
+  verify:
+    # macOS: the disk image can be mounted and the app inspected.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Release files
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node dev/scripts/verify-release.mjs "$TAG"
+
+  pages:
+    needs: verify
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
+
+  site:
+    needs: pages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Live project page and README badge
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node dev/scripts/verify-release.mjs "$TAG" --site

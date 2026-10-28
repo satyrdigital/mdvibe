@@ -1,10 +1,11 @@
-# Project page https://satyrdigital.github.io/mdvibe/ — publishes docs/site as is.
-# Manual only (Actions → Pages → Run workflow). Requires Settings → Pages →
-# Source: GitHub Actions.
+# Project page https://satyrdigital.github.io/mdvibe/ — publishes docs/site from main as is.
+# Runs by itself after a release is published (published.yml), or manually
+# (Actions → Pages → Run workflow). Requires Settings → Pages → Source: GitHub Actions.
 name: Pages
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -22,7 +23,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Always main: a release event would otherwise check out the tag.
       - uses: actions/checkout@v7
+        with:
+          ref: main
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
