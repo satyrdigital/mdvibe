@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://ko-fi.com/shumak"><img alt="Tip on Ko-fi" src="https://img.shields.io/badge/Ko--fi-Tip_the_author-FF5E5B?logo=kofi&logoColor=white"></a>
+  <a href="https://ko-fi.com/shumak"><img alt="Tip on Ko-fi" src="https://img.shields.io/badge/Ko--fi-Tip-FF5E5B?logo=kofi&logoColor=white"></a>
   <a href="https://buymeacoffee.com/shumak"><img alt="Buy me a coffee" src="https://img.shields.io/badge/Buy_me_a_coffee-FFDD00?logo=buymeacoffee&logoColor=black"></a>
 </p>
 
@@ -165,10 +165,10 @@ Found a security problem? Please see [SECURITY.md](SECURITY.md).
 ## Support MDVibe
 
 MDVibe is free and stays free: no ads, no subscriptions, no paid features, no "pro" version.
-If it makes reading Markdown a little calmer for you, you can thank the author with a tip:
+If you find it useful, you can leave an optional tip for the project:
 
 <p>
-  <a href="https://ko-fi.com/shumak"><img alt="Tip on Ko-fi" src="https://img.shields.io/badge/Ko--fi-Tip_the_author-FF5E5B?logo=kofi&logoColor=white&style=for-the-badge"></a>
+  <a href="https://ko-fi.com/shumak"><img alt="Tip on Ko-fi" src="https://img.shields.io/badge/Ko--fi-Tip-FF5E5B?logo=kofi&logoColor=white&style=for-the-badge"></a>
   <a href="https://buymeacoffee.com/shumak"><img alt="Buy me a coffee" src="https://img.shields.io/badge/Buy_me_a_coffee-FFDD00?logo=buymeacoffee&logoColor=black&style=for-the-badge"></a>
 </p>
 
@@ -179,9 +179,9 @@ If it makes reading Markdown a little calmer for you, you can thank the author w
 
 What a tip is — and is not:
 
-- It is optional. Every feature is the same with or without one, and the app never asks.
-- It is a payment for the work on MDVibe (updates, fixes, new platforms), received by
-  Soul Motors LLC. It is not a charitable donation and is not tax-deductible.
+- It is voluntary and buys nothing. Every feature is the same with or without one, and the app never asks.
+- It is received by Soul Motors LLC, which distributes MDVibe. It is not a charitable donation
+  and is not tax-deductible.
 - Payments are handled entirely by Ko-fi or Buy Me a Coffee. MDVibe and this repository
   never see your card or account details, and the app sends nothing anywhere.
 
